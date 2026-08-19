@@ -1,0 +1,2 @@
+#!/bin/sh
+echo '{"wav":"/dev/null","ttfa_ms":240,"sample_rate":24000}'
