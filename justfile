@@ -1,36 +1,40 @@
+#!/usr/bin/env just --justfile
+# cans — local mouth, Charm booth
+
 set dotenv-load := false
 
+binary_name := "cans"
+bin_dir := "bin"
+
 export CANS_ROOT := justfile_directory()
-export HF_HOME := env("HF_HOME", "/Volumes/fast/huggingface")
-export HF_HUB_CACHE := env("HF_HUB_CACHE", HF_HOME + "/hub")
 
+[doc('Build the cans binary')]
+mod build '.justfiles/build.just'
+
+[doc('Tests')]
+mod test '.justfiles/test.just'
+
+[doc('Vet / fmt')]
+mod lint '.justfiles/lint.just'
+
+[doc('Record the booth with VHS')]
+mod vhs '.justfiles/vhs.just'
+
+[doc('Run, say, keep, install Python sidecar')]
+mod run '.justfiles/run.just'
+
+[private]
 default:
-    @just --list --justfile {{ source_file() }}
+    @echo "cans — put the cans on."
+    @echo ""
+    @just --list --unsorted
 
-install:
-    go mod tidy
-    uv sync
+fmt:
+    gofmt -w .
 
-run:
-    go run ./cmd/cans
-
-say *text:
-    go run ./cmd/cans say {{ text }}
-
-keep wav:
-    go run ./cmd/cans keep {{ wav }}
-
-test:
-    CANS_NOPLAY=1 go test ./...
-
-lint:
+vet:
     go vet ./...
 
-tape:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    if ! command -v vhs >/dev/null; then
-      echo "vhs not installed. brew install vhs  # GIF is optional"
-      exit 0
-    fi
-    vhs tapes/booth.tape
+clean:
+    rm -rf {{ bin_dir }}
+    @echo "cleaned {{ bin_dir }}"

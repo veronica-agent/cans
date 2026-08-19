@@ -6,6 +6,9 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"github.com/veronica-agent/cans/internal/audio"
 )
 
 // Current is the pinned throat.
@@ -16,46 +19,94 @@ type Current struct {
 
 func homeDir() string {
 	if h := os.Getenv("CANS_HOME"); h != "" {
-		return h
+		return filepath.Clean(h)
 	}
 	u, err := os.UserHomeDir()
-	if err != nil {
+	if err != nil || strings.TrimSpace(u) == "" {
 		return ".cans"
 	}
 	return filepath.Join(u, ".cans")
 }
 
-func rootDir() string {
-	if r := os.Getenv("CANS_ROOT"); r != "" {
-		return r
-	}
-	wd, err := os.Getwd()
-	if err != nil {
-		return "."
-	}
-	return wd
+func currentDir() string {
+	return filepath.Join(homeDir(), "current")
 }
 
 func currentPath() string {
 	return filepath.Join(homeDir(), "current.json")
 }
 
+// Root is the repo root that holds voices/veronica.
+func Root() string {
+	if r := os.Getenv("CANS_ROOT"); r != "" {
+		return r
+	}
+	var starts []string
+	if wd, err := os.Getwd(); err == nil {
+		starts = append(starts, wd)
+	}
+	if exe, err := os.Executable(); err == nil {
+		starts = append(starts, filepath.Dir(exe))
+	}
+	for _, start := range starts {
+		dir := start
+		for i := 0; i < 8; i++ {
+			cand := filepath.Join(dir, "voices", "veronica", "ref.wav")
+			if audio.HeaderOK(cand) == nil {
+				return dir
+			}
+			parent := filepath.Dir(dir)
+			if parent == dir {
+				break
+			}
+			dir = parent
+		}
+	}
+	if wd, err := os.Getwd(); err == nil {
+		return wd
+	}
+	return "."
+}
+
 // Default is shipped Veronica.
 func Default() Current {
 	return Current{
-		Wav:     filepath.Join(rootDir(), "voices", "veronica", "ref.wav"),
+		Wav:     filepath.Join(Root(), "voices", "veronica", "ref.wav"),
 		RefText: "Just like that, feel the rhythm of my voice.",
 	}
 }
 
-// Load returns the kept throat, or Default if none.
+func allowed(path string) error {
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return err
+	}
+	if err := audio.HeaderOK(abs); err != nil {
+		return err
+	}
+	def, err := filepath.Abs(Default().Wav)
+	if err == nil && abs == def {
+		return nil
+	}
+	cur, err := filepath.Abs(currentDir())
+	if err != nil {
+		return err
+	}
+	rel, err := filepath.Rel(cur, abs)
+	if err != nil || strings.HasPrefix(rel, "..") {
+		return fmt.Errorf("keep: wav not in CANS_HOME/current or shipped default")
+	}
+	return nil
+}
+
+// Load returns the kept throat, or Default if none is pinned.
 func Load() (Current, error) {
 	p := currentPath()
 	f, err := os.Open(p)
 	if err != nil {
 		if os.IsNotExist(err) {
 			d := Default()
-			if _, statErr := os.Stat(d.Wav); statErr != nil {
+			if err := audio.HeaderOK(d.Wav); err != nil {
 				return Current{}, fmt.Errorf("default ref missing: %s", d.Wav)
 			}
 			return d, nil
@@ -65,27 +116,34 @@ func Load() (Current, error) {
 	defer f.Close()
 	var c Current
 	if err := json.NewDecoder(f).Decode(&c); err != nil && err != io.EOF {
+		return Current{}, fmt.Errorf("keep: corrupt current.json: %w", err)
+	}
+	if strings.TrimSpace(c.Wav) == "" || strings.TrimSpace(c.RefText) == "" {
+		return Current{}, fmt.Errorf("keep: corrupt current.json")
+	}
+	if !filepath.IsAbs(c.Wav) {
+		return Current{}, fmt.Errorf("keep: wav path must be absolute")
+	}
+	if err := allowed(c.Wav); err != nil {
 		return Current{}, err
-	}
-	if c.Wav == "" {
-		return Default(), nil
-	}
-	if _, err := os.Stat(c.Wav); err != nil {
-		return Current{}, fmt.Errorf("kept wav missing: %s", c.Wav)
 	}
 	return c, nil
 }
 
-// Pin copies wav into CANS_HOME and writes current.json.
+// Pin copies wav into CANS_HOME/current and writes current.json.
 func Pin(wavPath, refText string) (Current, error) {
+	refText = strings.TrimSpace(refText)
+	if refText == "" {
+		return Current{}, fmt.Errorf("keep: -text is required (the words spoken in the wav)")
+	}
 	src, err := filepath.Abs(wavPath)
 	if err != nil {
 		return Current{}, err
 	}
-	if _, err := os.Stat(src); err != nil {
-		return Current{}, fmt.Errorf("keep: wav not found: %s", wavPath)
+	if err := audio.HeaderOK(src); err != nil {
+		return Current{}, fmt.Errorf("keep: %w", err)
 	}
-	dir := filepath.Join(homeDir(), "current")
+	dir := currentDir()
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return Current{}, err
 	}
@@ -111,11 +169,31 @@ func Pin(wavPath, refText string) (Current, error) {
 	if err != nil {
 		return Current{}, err
 	}
-	if err := os.MkdirAll(homeDir(), 0o755); err != nil {
-		return Current{}, err
-	}
 	if err := os.WriteFile(currentPath(), body, 0o644); err != nil {
 		return Current{}, err
 	}
 	return c, nil
+}
+
+// Quote from character.toml, or the pin line.
+func Quote() string {
+	p := filepath.Join(Root(), "character.toml")
+	b, err := os.ReadFile(p)
+	if err != nil {
+		return "Put the cans on."
+	}
+	for _, line := range strings.Split(string(b), "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "quote") {
+			_, rest, ok := strings.Cut(line, "=")
+			if !ok {
+				continue
+			}
+			q := strings.Trim(strings.TrimSpace(rest), `"`)
+			if q != "" {
+				return q
+			}
+		}
+	}
+	return "Put the cans on."
 }

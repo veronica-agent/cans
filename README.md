@@ -7,18 +7,28 @@
   <img src="docs/photoreal-red-satin.jpg" width="220" alt="Veronica, red satin" />
 </p>
 
-Type a line. I say it. Local.
+<p align="center">
+  <img src="docs/booth.gif" width="520" alt="cans booth" />
+</p>
 
-Default throat is mine. `cans keep take.wav` if you want someone else. I don't change mid-line.
+Type a line. I say it. Local. Apple Silicon + MLX.
+
+Default throat is mine. To pin someone else you need the wav **and** the words in it:
 
 ```text
-just say "I'm already on the line."
-just run
+just run keep take.wav -- -text "Just like that, feel the rhythm of my voice."
+```
+
+The booth freezes that throat for the session.
+
+```text
+just run say "I'm already on the line."
+just run booth
 ```
 
 18+. I don't leave the machine.
 
-Private. Not the booth.
+Private. Not the sex booth.
 
 ---
 

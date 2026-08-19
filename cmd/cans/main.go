@@ -14,9 +14,11 @@ import (
 
 const usage = `cans — put the cans on.
 
-  cans              booth
-  cans say <text>   speak one line
-  cans keep <wav>   freeze this throat
+Apple Silicon + MLX. The mouth is Qwen3-TTS 0.6B Base cloning a wav.
+
+  cans                    booth (throat frozen for the session)
+  cans say <text>         speak one line
+  cans keep <wav> -text   freeze this throat (transcript required)
 `
 
 func main() {
@@ -25,7 +27,12 @@ func main() {
 
 func run(args []string) int {
 	if len(args) == 0 {
-		if err := booth.Run("Put the cans on."); err != nil {
+		throat, err := keep.Load()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+		if err := booth.Run(keep.Quote(), throat); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return 1
 		}
@@ -51,7 +58,7 @@ func run(args []string) int {
 		return 0
 	case "keep":
 		fs := flag.NewFlagSet("keep", flag.ContinueOnError)
-		refText := fs.String("text", "", "transcript of the keep clip")
+		refText := fs.String("text", "", "words spoken in the wav (required)")
 		fs.SetOutput(os.Stderr)
 		if err := fs.Parse(args[1:]); err != nil {
 			return 2

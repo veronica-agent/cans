@@ -1,8 +1,5 @@
 {
   "voice_id": "veronica",
-  "kind": "voice_design",
-  "source": "imagine-clip",
-  "clip": "docs/content/clips/human-talk.mp4",
   "ref_text": "Just like that, feel the rhythm of my voice.",
   "sample_rate": 24000
 }

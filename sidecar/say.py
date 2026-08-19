@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import tempfile
 import time
@@ -24,9 +25,13 @@ def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--text", required=True)
     p.add_argument("--ref", required=True)
-    p.add_argument("--ref-text", default="")
+    p.add_argument("--ref-text", required=True)
     p.add_argument("--out", default="")
     args = p.parse_args()
+
+    if not str(args.ref_text).strip():
+        print("ref-text is required", file=sys.stderr)
+        return 2
 
     ref = Path(args.ref)
     if not ref.is_file():
@@ -37,7 +42,7 @@ def main() -> int:
     import numpy as np
     import soundfile as sf
 
-    model = load_model(BASE_MODEL)  # mlx logs on stdout; Go takes the last JSON line
+    model = load_model(BASE_MODEL)
     started = time.perf_counter()
     first_chunk = None
     chunks: list = []
@@ -45,7 +50,7 @@ def main() -> int:
     for result in model.generate(
         text=args.text,
         ref_audio=str(ref),
-        ref_text=args.ref_text or " ",
+        ref_text=args.ref_text,
         lang_code="English",
         temperature=CLONE_TEMPERATURE,
         max_tokens=_token_budget(args.text),
@@ -63,7 +68,12 @@ def main() -> int:
 
     pcm = np.concatenate(chunks)
     elapsed_first = (first_chunk or time.perf_counter()) - started
-    out = Path(args.out) if args.out else Path(tempfile.mkstemp(suffix=".wav")[1])
+    if args.out:
+        out = Path(args.out)
+    else:
+        fd, tmp = tempfile.mkstemp(suffix=".wav")
+        os.close(fd)
+        out = Path(tmp)
     sf.write(str(out), pcm, rate)
 
     print(

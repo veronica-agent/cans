@@ -1,10 +1,10 @@
 /bin/
 /dist/
 .venv/
+uv.lock
 __pycache__/
 *.pyc
 state/
-/docs/booth.gif
 /tmp/
 *.wav
 !voices/veronica/ref.wav

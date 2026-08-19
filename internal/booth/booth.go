@@ -2,12 +2,12 @@ package booth
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/veronica-agent/cans/internal/keep"
 	"github.com/veronica-agent/cans/internal/play"
 	"github.com/veronica-agent/cans/internal/tts"
 )
@@ -24,6 +24,7 @@ type model struct {
 	status string
 	ttfa   string
 	quote  string
+	throat keep.Current
 	busy   bool
 	err    string
 }
@@ -33,7 +34,7 @@ type spokenMsg struct {
 	err  error
 }
 
-func New(quote string) model {
+func New(quote string, throat keep.Current) model {
 	ti := textinput.New()
 	ti.Placeholder = "type a line"
 	ti.Focus()
@@ -42,7 +43,7 @@ func New(quote string) model {
 	if quote == "" {
 		quote = "Put the cans on."
 	}
-	return model{input: ti, status: "listen", quote: quote}
+	return model{input: ti, status: "listen", quote: quote, throat: throat}
 }
 
 func (m model) Init() tea.Cmd { return textinput.Blink }
@@ -65,7 +66,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.status = "speaking"
 			m.err = ""
 			m.input.SetValue("")
-			return m, speak(line)
+			return m, speak(line, m.throat)
 		}
 	case spokenMsg:
 		m.busy = false
@@ -83,9 +84,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func speak(line string) tea.Cmd {
+func speak(line string, throat keep.Current) tea.Cmd {
 	return func() tea.Msg {
-		r, err := tts.Say(line)
+		r, err := tts.SayWith(line, throat)
 		if err != nil {
 			return spokenMsg{err: err}
 		}
@@ -109,9 +110,9 @@ func (m model) View() string {
 	return box.Render(head+"\n\n"+body) + "\n" + muted.Render("enter speaks · esc leaves") + "\n"
 }
 
-// Run the booth. Blocks.
-func Run(quote string) error {
-	p := tea.NewProgram(New(quote), tea.WithOutput(os.Stderr))
+// Run the booth. Throat is frozen for the session.
+func Run(quote string, throat keep.Current) error {
+	p := tea.NewProgram(New(quote, throat))
 	_, err := p.Run()
 	return err
 }

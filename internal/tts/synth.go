@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/veronica-agent/cans/internal/audio"
 	"github.com/veronica-agent/cans/internal/keep"
 )
 
@@ -23,31 +24,32 @@ func sidecarBin() string {
 	if b := os.Getenv("CANS_SAY_BIN"); b != "" {
 		return b
 	}
-	root := os.Getenv("CANS_ROOT")
-	if root == "" {
-		wd, _ := os.Getwd()
-		root = wd
-	}
-	return filepath.Join(root, "sidecar", "say.py")
+	return filepath.Join(keep.Root(), "sidecar", "say.py")
 }
 
 // Say clones text with the current throat.
 func Say(text string) (Result, error) {
+	cur, err := keep.Load()
+	if err != nil {
+		return Result{}, err
+	}
+	return SayWith(text, cur)
+}
+
+// SayWith clones text using a frozen throat (booth holds this for the session).
+func SayWith(text string, cur keep.Current) (Result, error) {
 	text = strings.TrimSpace(text)
 	if text == "" {
 		return Result{}, fmt.Errorf("say: empty text")
 	}
-	cur, err := keep.Load()
-	if err != nil {
-		return Result{}, err
+	if strings.TrimSpace(cur.RefText) == "" {
+		return Result{}, fmt.Errorf("say: empty ref text")
 	}
 	bin := sidecarBin()
 	var cmd *exec.Cmd
 	if strings.HasSuffix(bin, ".py") {
 		cmd = exec.Command("uv", "run", "python", bin, "--text", text, "--ref", cur.Wav, "--ref-text", cur.RefText)
-		if root := os.Getenv("CANS_ROOT"); root != "" {
-			cmd.Dir = root
-		}
+		cmd.Dir = keep.Root()
 	} else {
 		cmd = exec.Command(bin, "--text", text, "--ref", cur.Wav, "--ref-text", cur.RefText)
 	}
@@ -72,6 +74,9 @@ func Say(text string) (Result, error) {
 	if r.Wav == "" {
 		return Result{}, fmt.Errorf("say: sidecar returned no wav")
 	}
+	if err := audio.HeaderOK(r.Wav); err != nil {
+		return Result{}, fmt.Errorf("say: %w", err)
+	}
 	return r, nil
 }
 
@@ -79,7 +84,8 @@ func lastJSONLine(raw []byte) []byte {
 	var last []byte
 	for _, line := range bytes.Split(bytes.TrimSpace(raw), []byte("\n")) {
 		line = bytes.TrimSpace(line)
-		if len(line) > 0 && line[0] == '{' {
+		var r Result
+		if json.Unmarshal(line, &r) == nil && r.Wav != "" {
 			last = line
 		}
 	}
