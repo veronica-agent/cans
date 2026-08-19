@@ -90,8 +90,10 @@ func speak(line string, throat keep.Current) tea.Cmd {
 		if err != nil {
 			return spokenMsg{err: err}
 		}
-		if err := play.File(r.Wav); err != nil {
-			return spokenMsg{err: err}
+		playErr := play.File(r.Wav)
+		tts.RemoveTemp(r.Wav)
+		if playErr != nil {
+			return spokenMsg{err: playErr}
 		}
 		return spokenMsg{ttfa: r.TTFAMs}
 	}

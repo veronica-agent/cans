@@ -29,6 +29,10 @@ func sidecarBin() string {
 
 // Say clones text with the current throat.
 func Say(text string) (Result, error) {
+	text = strings.TrimSpace(text)
+	if text == "" {
+		return Result{}, fmt.Errorf("say: empty text")
+	}
 	cur, err := keep.Load()
 	if err != nil {
 		return Result{}, err
@@ -90,4 +94,25 @@ func lastJSONLine(raw []byte) []byte {
 		}
 	}
 	return last
+}
+
+// RemoveTemp deletes a sidecar wav if it lives under the process temp dir.
+// Kept refs under CANS_HOME and shipped voices are left alone.
+func RemoveTemp(path string) {
+	if path == "" {
+		return
+	}
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return
+	}
+	tmp, err := filepath.Abs(os.TempDir())
+	if err != nil {
+		return
+	}
+	rel, err := filepath.Rel(tmp, abs)
+	if err != nil || strings.HasPrefix(rel, "..") {
+		return
+	}
+	_ = os.Remove(abs)
 }

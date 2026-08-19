@@ -16,6 +16,7 @@ Type a line. I say it. Local. Apple Silicon + MLX.
 Default throat is mine. To pin someone else you need the wav **and** the words in it:
 
 ```text
+cans keep take.wav -text "Just like that, feel the rhythm of my voice."
 just run keep take.wav -- -text "Just like that, feel the rhythm of my voice."
 ```
 

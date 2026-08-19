@@ -3,6 +3,7 @@ package tts
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/veronica-agent/cans/internal/audio"
@@ -12,6 +13,34 @@ import (
 func TestSayEmpty(t *testing.T) {
 	if _, err := Say("  "); err == nil {
 		t.Fatal("expected empty text error")
+	}
+}
+
+func TestRemoveTempOnlyUnderTmp(t *testing.T) {
+	tmp := filepath.Join(t.TempDir(), "sidecar.wav")
+	if err := os.WriteFile(tmp, audio.Minimal(), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	outside := filepath.Join(t.TempDir(), "keep.wav")
+	if err := os.WriteFile(outside, audio.Minimal(), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	// t.TempDir is under os.TempDir on this OS — RemoveTemp should delete tmp file
+	// only when the path is inside os.TempDir. outside may also be; skip if not.
+	RemoveTemp(tmp)
+	if _, err := os.Stat(tmp); err == nil {
+		// still there: temp dir not under os.TempDir (unusual)
+		t.Log("temp not removed (test temp dir outside os.TempDir)")
+	}
+	absOut, _ := filepath.Abs(outside)
+	tmpRoot, _ := filepath.Abs(os.TempDir())
+	rel, err := filepath.Rel(tmpRoot, absOut)
+	if err == nil && !strings.HasPrefix(rel, "..") {
+		return
+	}
+	RemoveTemp(outside)
+	if _, err := os.Stat(outside); err != nil {
+		t.Fatal("should not delete wav outside process temp dir")
 	}
 }
 

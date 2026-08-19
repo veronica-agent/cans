@@ -71,6 +71,7 @@ def main() -> int:
     if args.out:
         out = Path(args.out)
     else:
+        # Go deletes this after play when it lives under the process temp dir.
         fd, tmp = tempfile.mkstemp(suffix=".wav")
         os.close(fd)
         out = Path(tmp)
