@@ -61,7 +61,10 @@ func Say(text string) (Result, error) {
 		}
 		return Result{}, fmt.Errorf("say: %s", msg)
 	}
-	line := bytes.TrimSpace(stdout.Bytes())
+	line := lastJSONLine(stdout.Bytes())
+	if line == nil {
+		return Result{}, fmt.Errorf("say: sidecar printed no json (%q)", stdout.String())
+	}
 	var r Result
 	if err := json.Unmarshal(line, &r); err != nil {
 		return Result{}, fmt.Errorf("say: bad sidecar json: %w (%q)", err, stdout.String())
@@ -70,4 +73,15 @@ func Say(text string) (Result, error) {
 		return Result{}, fmt.Errorf("say: sidecar returned no wav")
 	}
 	return r, nil
+}
+
+func lastJSONLine(raw []byte) []byte {
+	var last []byte
+	for _, line := range bytes.Split(bytes.TrimSpace(raw), []byte("\n")) {
+		line = bytes.TrimSpace(line)
+		if len(line) > 0 && line[0] == '{' {
+			last = line
+		}
+	}
+	return last
 }

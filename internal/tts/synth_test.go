@@ -8,6 +8,14 @@ import (
 	"github.com/veronica-agent/cans/internal/keep"
 )
 
+func TestLastJSONLine(t *testing.T) {
+	raw := []byte("Initialized encoder\n{\"wav\":\"/tmp/x.wav\",\"ttfa_ms\":12,\"sample_rate\":24000}\n")
+	got := lastJSONLine(raw)
+	if string(got) != `{"wav":"/tmp/x.wav","ttfa_ms":12,"sample_rate":24000}` {
+		t.Fatalf("%q", got)
+	}
+}
+
 func TestSayEmpty(t *testing.T) {
 	if _, err := Say("  "); err == nil {
 		t.Fatal("expected empty text error")

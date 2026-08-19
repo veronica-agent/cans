@@ -37,7 +37,7 @@ def main() -> int:
     import numpy as np
     import soundfile as sf
 
-    model = load_model(BASE_MODEL)
+    model = load_model(BASE_MODEL)  # mlx logs on stdout; Go takes the last JSON line
     started = time.perf_counter()
     first_chunk = None
     chunks: list = []
