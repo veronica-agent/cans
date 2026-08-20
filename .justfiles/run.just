@@ -10,10 +10,6 @@ default:
 install:
     cd {{ root }} && just install
 
-# uv sync the mlx sidecar in a checkout. Users run cans doctor instead.
-sidecar:
-    cd {{ root }} && uv sync
-
 booth:
     cd {{ root }} && go run ./cmd/cans
 
