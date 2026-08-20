@@ -30,13 +30,13 @@ mod dist '.justfiles/dist.just'
 install:
     just build install
 
-[doc('remove cans binaries, brew formula, and ~/.cans')]
-uninstall:
-    just build uninstall
+[doc('remove cans binaries; --all also wipes ~/.cans')]
+uninstall *args:
+    just build uninstall {{ args }}
 
-[doc('same as uninstall')]
+[doc('same as just uninstall --all')]
 uninstall-home:
-    just uninstall
+    just uninstall --all
 
 [private]
 default:
