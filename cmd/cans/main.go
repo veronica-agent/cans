@@ -1,14 +1,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 
 	"github.com/veronica-agent/cans/internal/booth"
+	"github.com/veronica-agent/cans/internal/doctor"
 	"github.com/veronica-agent/cans/internal/keep"
 	"github.com/veronica-agent/cans/internal/play"
+	"github.com/veronica-agent/cans/internal/ship"
 	"github.com/veronica-agent/cans/internal/tts"
 )
 
@@ -24,6 +27,8 @@ Apple Silicon + MLX. The mouth is Qwen3-TTS 0.6B Base cloning a wav.
   cans                         booth (throat frozen for the session)
   cans say <text>              speak one line
   cans keep <wav> -text WORDS  freeze this throat (both orders work)
+  cans doctor                  install sidecar, check the machine
+  cans version                 print version
 `
 
 func main() {
@@ -32,6 +37,10 @@ func main() {
 
 func run(args []string) int {
 	if len(args) == 0 {
+		if err := doctor.Prepare(context.Background(), stderr); err != nil {
+			fmt.Fprintln(stderr, err)
+			return 1
+		}
 		throat, err := keep.Load()
 		if err != nil {
 			fmt.Fprintln(stderr, err)
@@ -50,6 +59,10 @@ func run(args []string) int {
 			fmt.Fprintln(stderr, "say: missing text")
 			return 2
 		}
+		if err := doctor.Prepare(context.Background(), stderr); err != nil {
+			fmt.Fprintln(stderr, err)
+			return 1
+		}
 		r, err := tts.Say(text)
 		if err != nil {
 			fmt.Fprintln(stderr, err)
@@ -62,6 +75,14 @@ func run(args []string) int {
 			fmt.Fprintln(stderr, playErr)
 			return 1
 		}
+		return 0
+	case "doctor":
+		if err := doctor.Run(context.Background(), stdout, stderr); err != nil {
+			return 1
+		}
+		return 0
+	case "version":
+		fmt.Fprintln(stdout, "cans "+ship.Version)
 		return 0
 	case "keep":
 		wav, text, err := parseKeep(args[1:])

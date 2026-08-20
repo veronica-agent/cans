@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/veronica-agent/cans/internal/audio"
+	"github.com/veronica-agent/cans/internal/ship"
 )
 
 // Current is the pinned throat.
@@ -18,14 +19,7 @@ type Current struct {
 }
 
 func homeDir() string {
-	if h := os.Getenv("CANS_HOME"); h != "" {
-		return filepath.Clean(h)
-	}
-	u, err := os.UserHomeDir()
-	if err != nil || strings.TrimSpace(u) == "" {
-		return ".cans"
-	}
-	return filepath.Join(u, ".cans")
+	return ship.Home()
 }
 
 func currentDir() string {
@@ -36,42 +30,15 @@ func currentPath() string {
 	return filepath.Join(homeDir(), "current.json")
 }
 
-// Root is the repo root that holds voices/veronica.
+// Root is the payload directory that holds voices/veronica.
 func Root() string {
-	if r := os.Getenv("CANS_ROOT"); r != "" {
-		return r
-	}
-	var starts []string
-	if wd, err := os.Getwd(); err == nil {
-		starts = append(starts, wd)
-	}
-	if exe, err := os.Executable(); err == nil {
-		starts = append(starts, filepath.Dir(exe))
-	}
-	for _, start := range starts {
-		dir := start
-		for i := 0; i < 8; i++ {
-			cand := filepath.Join(dir, "voices", "veronica", "ref.wav")
-			if audio.HeaderOK(cand) == nil {
-				return dir
-			}
-			parent := filepath.Dir(dir)
-			if parent == dir {
-				break
-			}
-			dir = parent
-		}
-	}
-	if wd, err := os.Getwd(); err == nil {
-		return wd
-	}
-	return "."
+	return ship.Root()
 }
 
 // Default is shipped Veronica.
 func Default() Current {
 	return Current{
-		Wav:     filepath.Join(Root(), "voices", "veronica", "ref.wav"),
+		Wav:     ship.DefaultWav(Root()),
 		RefText: "Just like that, feel the rhythm of my voice.",
 	}
 }
