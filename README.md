@@ -51,7 +51,7 @@ cd cans
 just install
 ```
 
-`just install` (same as `just run install`) is `go install` into `$(go env GOBIN)`, or `$(go env GOPATH)/bin` if GOBIN is empty. `cans doctor` fetches the mouth. `just uninstall` removes the binary and leftover `~/.cans/venv`. `just uninstall-home` removes `~/.cans`.
+`just install` (same as `just run install`) is `go install` into `$(go env GOBIN)`, or `$(go env GOPATH)/bin` if GOBIN is empty. `cans doctor` fetches the mouth. `just uninstall` removes the binary, brew formula, and `~/.cans`.
 
 </details>
 
