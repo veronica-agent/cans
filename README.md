@@ -24,16 +24,12 @@ macOS, Apple Silicon. No Python, no uv.
 brew install --HEAD veronica-agent/tap/cans
 ```
 
-The mouth is a native [Qwen3-TTS worker](https://github.com/Obedience-Corp/qwen3-tts-native). `cans` does not download it yet. Unpack the darwin-arm64 tarball from [releases](https://github.com/Obedience-Corp/qwen3-tts-native/releases) so the worker is on disk:
+The mouth is a native [Qwen3-TTS worker](https://github.com/Obedience-Corp/qwen3-tts-native). First `cans doctor` (or first `cans`) downloads it once, about 1.6 GB, into `~/.cans/native`.
 
 ```bash
-mkdir -p ~/.cans/native
-tar -xzf qwen3-tts-native-darwin-arm64.tar.gz -C ~/.cans/native --strip-components=1
 cans doctor
 cans
 ```
-
-`~/.cans/native/bin/qwen3-tts-worker` has to exist. `cans doctor` only checks; it does not fetch the tarball.
 
 <details>
 <summary>curl</summary>
@@ -42,7 +38,7 @@ cans
 curl -fsSL https://raw.githubusercontent.com/veronica-agent/cans/main/install.sh | sh
 ```
 
-Until a tagged release exists, that script needs Go and installs `cans` onto PATH. Then unpack the worker as above.
+Until a tagged release exists, that script needs Go and installs `cans` onto PATH. Then `cans doctor`.
 
 </details>
 
@@ -55,7 +51,7 @@ cd cans
 just install
 ```
 
-`just install` (same as `just run install`) is `go install` into `$(go env GOBIN)`, or `$(go env GOPATH)/bin` if GOBIN is empty. Unpack the worker as above before `cans`. `just uninstall` removes the binary and leftover `~/.cans/venv`. `just uninstall-home` removes `~/.cans`.
+`just install` (same as `just run install`) is `go install` into `$(go env GOBIN)`, or `$(go env GOPATH)/bin` if GOBIN is empty. `cans doctor` fetches the mouth. `just uninstall` removes the binary and leftover `~/.cans/venv`. `just uninstall-home` removes `~/.cans`.
 
 </details>
 

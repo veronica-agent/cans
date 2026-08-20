@@ -16,8 +16,8 @@ class Cans < Formula
 
   def caveats
     <<~EOS
-      Apple Silicon. Unpack qwen3-tts-native into ~/.cans/native
-      so bin/qwen3-tts-worker exists, then: cans doctor
+      Apple Silicon. First run: cans doctor
+      (downloads the native mouth once, ~1.6 GB)
     EOS
   end
 
