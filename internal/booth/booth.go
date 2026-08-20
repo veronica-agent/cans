@@ -7,16 +7,24 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/termenv"
 	"github.com/veronica-agent/cans/internal/keep"
 	"github.com/veronica-agent/cans/internal/play"
 	"github.com/veronica-agent/cans/internal/tts"
 )
 
 var (
-	chrome = lipgloss.NewStyle().Foreground(lipgloss.Color("175"))
-	muted  = lipgloss.NewStyle().Foreground(lipgloss.Color("245"))
-	errSt  = lipgloss.NewStyle().Foreground(lipgloss.Color("203"))
-	box    = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).Padding(1, 2).Width(56)
+	rose   = lipgloss.Color("#C45C7A")
+	dust   = lipgloss.Color("#A890A0")
+	snow   = lipgloss.Color("#F8EDE8")
+	chrome = lipgloss.NewStyle().Foreground(rose).Bold(true)
+	muted  = lipgloss.NewStyle().Foreground(dust)
+	errSt  = lipgloss.NewStyle().Foreground(lipgloss.Color("#E07070"))
+	box    = lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(rose).
+		Padding(1, 2).
+		Width(56)
 )
 
 type model struct {
@@ -37,6 +45,10 @@ type spokenMsg struct {
 func New(quote string, throat keep.Current) model {
 	ti := textinput.New()
 	ti.Placeholder = "type a line"
+	ti.PromptStyle = chrome
+	ti.TextStyle = lipgloss.NewStyle().Foreground(snow)
+	ti.PlaceholderStyle = muted
+	ti.Cursor.Style = chrome
 	ti.Focus()
 	ti.CharLimit = 280
 	ti.Width = 48
@@ -114,6 +126,9 @@ func (m model) View() string {
 
 // Run the booth. Throat is frozen for the session.
 func Run(quote string, throat keep.Current) error {
+	// ttyd/vhs often report a 16-color TERM. Paint the booth anyway.
+	lipgloss.SetColorProfile(termenv.TrueColor)
+	lipgloss.SetHasDarkBackground(true)
 	p := tea.NewProgram(New(quote, throat))
 	_, err := p.Run()
 	return err

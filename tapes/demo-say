@@ -1,0 +1,16 @@
+#!/bin/sh
+# VHS demo: hand the pre-baked line to the booth so mlx is not in the tape.
+set -eu
+dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+wav="${CANS_DEMO_WAV:-$dir/tapes/booth-line.wav}"
+ttfa="${CANS_DEMO_TTFA:-240}"
+if [ ! -f "$wav" ]; then
+	echo "demo wav missing: $wav" >&2
+	exit 1
+fi
+# Hold "speaking" for the length of the line. afplay inside vhs has no useful output.
+hold="${CANS_DEMO_HOLD_MS:-0}"
+if [ "$hold" -gt 0 ]; then
+	sleep "$(python3 -c "print($hold/1000)")"
+fi
+echo "{\"wav\":\"$wav\",\"ttfa_ms\":$ttfa,\"sample_rate\":24000}"

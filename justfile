@@ -20,11 +20,15 @@ mod lint '.justfiles/lint.just'
 [doc('Record the booth with VHS')]
 mod vhs '.justfiles/vhs.just'
 
-[doc('Run, say, keep, install Python sidecar')]
+[doc('Install, run booth / say / keep')]
 mod run '.justfiles/run.just'
 
 [doc('Stamp embed, goreleaser snapshot')]
 mod dist '.justfiles/dist.just'
+
+[doc('go install cans onto GOBIN / GOPATH/bin')]
+install:
+    just build install
 
 [private]
 default:

@@ -6,7 +6,12 @@ root := `git rev-parse --show-toplevel`
 default:
     @just --list --justfile {{ source_file() }}
 
+# go install onto GOBIN / GOPATH/bin
 install:
+    cd {{ root }} && just install
+
+# uv sync the mlx sidecar in a checkout. Users run cans doctor instead.
+sidecar:
     cd {{ root }} && uv sync
 
 booth:
