@@ -1,0 +1,11 @@
+/bin/
+/dist/
+.venv/
+uv.lock
+__pycache__/
+*.pyc
+state/
+/tmp/
+*.wav
+!voices/veronica/ref.wav
+.DS_Store

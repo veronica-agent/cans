@@ -1,0 +1,6 @@
+#!/bin/sh
+# VHS / tests: print a JSON result without MLX.
+out="${TMPDIR:-/tmp}/cans-fake.wav"
+# 44-byte silent WAV header + 2 data bytes (24 kHz mono 16-bit)
+printf 'RIFF&\0\0\0WAVEfmt \020\0\0\0\001\0\001\0\300^\0\0\200\275\0\0\002\0\020\0data\002\0\0\0\0\0' > "$out"
+echo "{\"wav\":\"$out\",\"ttfa_ms\":240,\"sample_rate\":24000}"
