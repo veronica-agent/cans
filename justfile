@@ -20,28 +20,15 @@ mod lint '.justfiles/lint.just'
 [doc('Record the booth with VHS')]
 mod vhs '.justfiles/vhs.just'
 
-[doc('Run booth / say / keep')]
+[doc('Install, run booth / say / keep')]
 mod run '.justfiles/run.just'
 
 [doc('Stamp embed, goreleaser snapshot')]
 mod dist '.justfiles/dist.just'
 
-[doc('Build bin/cans and copy it onto PATH')]
+[doc('go install cans onto GOBIN / GOPATH/bin')]
 install:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    just build quick
-    dest="${DEST:-}"
-    if [ -z "$dest" ]; then
-        if [ -d /opt/homebrew/bin ] && [ -w /opt/homebrew/bin ]; then
-            dest=/opt/homebrew/bin
-        else
-            dest="${HOME}/.local/bin"
-        fi
-    fi
-    mkdir -p "$dest"
-    install -m 755 "{{ bin_dir }}/cans" "$dest/cans"
-    echo "installed $dest/cans"
+    just build install
 
 [private]
 default:

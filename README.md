@@ -44,7 +44,7 @@ just install
 cans
 ```
 
-`just install` builds `bin/cans` and copies it onto PATH (`/opt/homebrew/bin` or `~/.local/bin`). Override with `DEST`.
+`just install` (same as `just run install`) is `go install` into `$(go env GOPATH)/bin`.
 
 </details>
 
