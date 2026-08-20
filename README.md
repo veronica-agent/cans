@@ -66,7 +66,7 @@ cans doctor
 
 Keep needs the clip and the words spoken in it. Throat stays put for the session.
 
-The CLI is Go. The mouth is [Qwen3-TTS 0.6B](https://huggingface.co/mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16) on [MLX](https://github.com/Blaizzy/mlx-audio), which is Python, so `cans` starts that process for you.
+The CLI is Go. The mouth is a native [Qwen3-TTS](https://github.com/Obedience-Corp/qwen3-tts-native) worker that clones a wav. No Python.
 
 ---
 

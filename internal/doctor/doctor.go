@@ -32,12 +32,6 @@ func Run(ctx context.Context, stdout, stderr io.Writer) error {
 		fmt.Fprintln(stderr, err)
 		return err
 	}
-	if ship.LookUV() != "" {
-		fmt.Fprintln(stderr, "syncing sidecar (uv + mlx-audio)…")
-		if err := ship.Sync(ctx, stderr); err != nil {
-			fmt.Fprintln(stderr, err)
-		}
-	}
 	checks := Diagnose(ctx, true)
 	printReport(stdout, checks)
 	for _, c := range checks {
@@ -51,12 +45,8 @@ func Run(ctx context.Context, stdout, stderr io.Writer) error {
 
 // Diagnose inspects the machine. mlx is checked only when the venv exists.
 func Diagnose(ctx context.Context, mlx bool) []Check {
-	out := []Check{machineCheck(), uvCheck(), payloadCheck(), throatCheck(), playCheck()}
-	out = append(out, venvCheck())
-	if mlx && ship.LookUV() != "" && ship.VenvReady() {
-		out = append(out, mlxCheck(ctx))
-	}
-	return out
+	_ = mlx
+	return []Check{machineCheck(), workerCheck(), payloadCheck(), throatCheck(), playCheck()}
 }
 
 func machineCheck() Check {
@@ -69,12 +59,12 @@ func machineCheck() Check {
 	return c
 }
 
-func uvCheck() Check {
-	p := ship.LookUV()
-	if p == "" {
-		return Check{Name: "uv", Hint: "brew install uv"}
+func workerCheck() Check {
+	p := ship.WorkerBin()
+	if _, err := os.Stat(p); err != nil {
+		return Check{Name: "worker", Hint: "native mouth missing — unpack qwen3-tts-native under ~/.cans/native"}
 	}
-	return Check{Name: "uv", Detail: p, OK: true}
+	return Check{Name: "worker", Detail: p, OK: true}
 }
 
 func payloadCheck() Check {
@@ -120,27 +110,6 @@ func playCheck() Check {
 	return c
 }
 
-func venvCheck() Check {
-	c := Check{Name: "venv", Detail: ship.Venv()}
-	if ship.VenvReady() {
-		c.OK = true
-		return c
-	}
-	c.Hint = "run cans doctor"
-	return c
-}
-
-func mlxCheck(ctx context.Context) Check {
-	c := Check{Name: "mlx-audio"}
-	if err := ship.ImportMLX(ctx); err != nil {
-		c.Hint = err.Error()
-		return c
-	}
-	c.OK = true
-	c.Detail = "import ok"
-	return c
-}
-
 func printReport(w io.Writer, checks []Check) {
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 	for _, c := range checks {
@@ -160,7 +129,7 @@ func printReport(w io.Writer, checks []Check) {
 	_ = tw.Flush()
 }
 
-// Prepare extracts payload and syncs the venv when a real sidecar will run.
+// Prepare extracts the character payload and checks the native worker.
 func Prepare(ctx context.Context, stderr io.Writer) error {
 	if os.Getenv("CANS_SAY_BIN") != "" {
 		return nil
@@ -168,9 +137,8 @@ func Prepare(ctx context.Context, stderr io.Writer) error {
 	if err := ship.Ensure(); err != nil {
 		return err
 	}
-	if ship.VenvReady() {
-		return nil
+	if _, err := os.Stat(ship.WorkerBin()); err != nil {
+		return fmt.Errorf("native mouth missing — cans doctor")
 	}
-	fmt.Fprintln(stderr, "setting up the mouth (uv + mlx-audio)…")
-	return ship.Sync(ctx, stderr)
+	return nil
 }

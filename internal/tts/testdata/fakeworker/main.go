@@ -1,0 +1,40 @@
+// Fake qwen3-tts-worker for unit tests. Emits one silent sample.
+package main
+
+import (
+	"bufio"
+	"encoding/binary"
+	"encoding/json"
+	"fmt"
+	"math"
+	"os"
+)
+
+func main() {
+	fmt.Println(`{"type":"ready","protocol":"qwen3-tts-worker/v1","sample_rate":24000,"pcm_format":"f32le","streaming":false}`)
+	sc := bufio.NewScanner(os.Stdin)
+	for sc.Scan() {
+		line := sc.Text()
+		var req struct {
+			Type string `json:"type"`
+			ID   string `json:"id"`
+			Text string `json:"text"`
+		}
+		_ = json.Unmarshal([]byte(line), &req)
+		if req.Type == "shutdown" {
+			return
+		}
+		if req.Type != "synthesize" {
+			continue
+		}
+		if req.Text == "" {
+			fmt.Printf("{\"type\":\"error\",\"id\":%q,\"message\":\"missing text\"}\n", req.ID)
+			continue
+		}
+		fmt.Printf("{\"type\":\"pcm_meta\",\"id\":%q,\"sample_rate\":24000,\"format\":\"f32le\",\"n_samples\":1}\n", req.ID)
+		var b [4]byte
+		binary.LittleEndian.PutUint32(b[:], math.Float32bits(0))
+		_, _ = os.Stdout.Write(b[:])
+		fmt.Printf("\n{\"type\":\"final\",\"id\":%q}\n", req.ID)
+	}
+}

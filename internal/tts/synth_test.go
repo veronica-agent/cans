@@ -1,7 +1,9 @@
 package tts
 
 import (
+	"context"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -11,7 +13,7 @@ import (
 )
 
 func TestSayEmpty(t *testing.T) {
-	if _, err := Say("  "); err == nil {
+	if _, err := Say(context.Background(), "  "); err == nil {
 		t.Fatal("expected empty text error")
 	}
 }
@@ -74,7 +76,7 @@ func TestSayRejectsNonWAV(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Setenv("CANS_SAY_BIN", script)
-	if _, err := Say("hi"); err == nil {
+	if _, err := Say(context.Background(), "hi"); err == nil {
 		t.Fatal("expected non-wav reject")
 	}
 }
@@ -104,7 +106,7 @@ func TestSayMockSidecar(t *testing.T) {
 	if _, err := keep.Load(); err != nil {
 		t.Fatal(err)
 	}
-	r, err := Say("Put the cans on.")
+	r, err := Say(context.Background(), "Put the cans on.")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,8 +115,68 @@ func TestSayMockSidecar(t *testing.T) {
 	}
 }
 
-func TestSayWithEmptyRefText(t *testing.T) {
-	if _, err := SayWith("hi", keep.Current{Wav: "/x", RefText: ""}); err == nil {
-		t.Fatal("expected empty ref text")
+func TestSayWithEmptyRefWav(t *testing.T) {
+	bin := buildFakeWorker(t)
+	t.Setenv("CANS_HOME", t.TempDir())
+	t.Setenv("CANS_WORKER_BIN", bin)
+	t.Setenv("CANS_WORKER_MODELS", t.TempDir())
+	sess, err := Open(context.Background())
+	if err != nil {
+		t.Fatal(err)
 	}
+	defer sess.Close()
+	if _, err := sess.Say(context.Background(), "hi", keep.Current{}); err == nil {
+		t.Fatal("expected empty ref wav")
+	}
+}
+
+func TestSessionFakeWorker(t *testing.T) {
+	bin := buildFakeWorker(t)
+	home := t.TempDir()
+	t.Setenv("CANS_HOME", home)
+	t.Setenv("CANS_WORKER_BIN", bin)
+	t.Setenv("CANS_WORKER_MODELS", t.TempDir())
+	wav := filepath.Join(t.TempDir(), "ref.wav")
+	if err := os.WriteFile(wav, audio.Minimal(), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	sess, err := Open(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer sess.Close()
+	r, err := sess.Say(context.Background(), "Put the cans on.", keep.Current{Wav: wav})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := audio.HeaderOK(r.Wav); err != nil {
+		t.Fatal(err)
+	}
+	RemoveTemp(r.Wav)
+}
+
+func TestSayMissingWorker(t *testing.T) {
+	t.Setenv("CANS_HOME", t.TempDir())
+	t.Setenv("CANS_WORKER_BIN", filepath.Join(t.TempDir(), "nope"))
+	t.Setenv("CANS_SAY_BIN", "")
+	if _, err := SayWith(context.Background(), "hi", keep.Current{Wav: "/x"}); err == nil {
+		t.Fatal("expected missing worker")
+	}
+}
+
+func buildFakeWorker(t *testing.T) string {
+	t.Helper()
+	dir, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	src := filepath.Join(dir, "testdata", "fakeworker")
+	bin := filepath.Join(t.TempDir(), "fake-worker")
+	cmd := exec.Command("go", "build", "-o", bin, src)
+	cmd.Dir = dir
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("build fake worker: %s\n%s", err, out)
+	}
+	return bin
 }

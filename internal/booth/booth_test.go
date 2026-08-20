@@ -9,7 +9,7 @@ import (
 )
 
 func TestEmptyEnterStaysListen(t *testing.T) {
-	m := New("Put the cans on.", keep.Current{Wav: "/x", RefText: "hi"})
+	m := New("Put the cans on.", keep.Current{Wav: "/x", RefText: "hi"}, nil)
 	next, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	got := next.(model)
 	if got.status != "listen" || got.busy {
@@ -21,7 +21,7 @@ func TestEmptyEnterStaysListen(t *testing.T) {
 }
 
 func TestViewShowsQuote(t *testing.T) {
-	m := New("Put the cans on.", keep.Current{Wav: "/x", RefText: "hi"})
+	m := New("Put the cans on.", keep.Current{Wav: "/x", RefText: "hi"}, nil)
 	if !strings.Contains(m.View(), "Put the cans on.") {
 		t.Fatalf("%q", m.View())
 	}
@@ -31,7 +31,7 @@ func TestViewShowsQuote(t *testing.T) {
 }
 
 func TestEscQuits(t *testing.T) {
-	m := New("x", keep.Current{Wav: "/x", RefText: "hi"})
+	m := New("x", keep.Current{Wav: "/x", RefText: "hi"}, nil)
 	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
 	if cmd == nil {
 		t.Fatal("expected quit")

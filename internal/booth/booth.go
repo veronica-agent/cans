@@ -1,7 +1,9 @@
 package booth
 
 import (
+	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
@@ -33,6 +35,7 @@ type model struct {
 	ttfa   string
 	quote  string
 	throat keep.Current
+	sess   *tts.Session
 	busy   bool
 	err    string
 }
@@ -42,7 +45,7 @@ type spokenMsg struct {
 	err  error
 }
 
-func New(quote string, throat keep.Current) model {
+func New(quote string, throat keep.Current, sess *tts.Session) model {
 	ti := textinput.New()
 	ti.Placeholder = "type a line"
 	ti.PromptStyle = chrome
@@ -55,7 +58,7 @@ func New(quote string, throat keep.Current) model {
 	if quote == "" {
 		quote = "Put the cans on."
 	}
-	return model{input: ti, status: "listen", quote: quote, throat: throat}
+	return model{input: ti, status: "listen", quote: quote, throat: throat, sess: sess}
 }
 
 func (m model) Init() tea.Cmd { return textinput.Blink }
@@ -78,7 +81,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.status = "speaking"
 			m.err = ""
 			m.input.SetValue("")
-			return m, speak(line, m.throat)
+			return m, speak(line, m.throat, m.sess)
 		}
 	case spokenMsg:
 		m.busy = false
@@ -96,9 +99,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func speak(line string, throat keep.Current) tea.Cmd {
+func speak(line string, throat keep.Current, sess *tts.Session) tea.Cmd {
 	return func() tea.Msg {
-		r, err := tts.SayWith(line, throat)
+		var (
+			r   tts.Result
+			err error
+		)
+		if sess != nil {
+			r, err = sess.Say(context.Background(), line, throat)
+		} else {
+			r, err = tts.SayWith(context.Background(), line, throat)
+		}
 		if err != nil {
 			return spokenMsg{err: err}
 		}
@@ -124,12 +135,23 @@ func (m model) View() string {
 	return box.Render(head+"\n\n"+body) + "\n" + muted.Render("enter speaks · esc leaves") + "\n"
 }
 
-// Run the booth. Throat is frozen for the session.
-func Run(quote string, throat keep.Current) error {
-	// ttyd/vhs often report a 16-color TERM. Paint the booth anyway.
+// Run the booth. Throat is frozen for the session. Worker stays warm.
+func Run(ctx context.Context, quote string, throat keep.Current) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	lipgloss.SetColorProfile(termenv.TrueColor)
 	lipgloss.SetHasDarkBackground(true)
-	p := tea.NewProgram(New(quote, throat))
+	var sess *tts.Session
+	if os.Getenv("CANS_SAY_BIN") == "" {
+		s, err := tts.Open(ctx)
+		if err != nil {
+			return err
+		}
+		sess = s
+		defer sess.Close()
+	}
+	p := tea.NewProgram(New(quote, throat, sess))
 	_, err := p.Run()
 	return err
 }
