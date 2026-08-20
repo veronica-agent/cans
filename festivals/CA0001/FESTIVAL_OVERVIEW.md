@@ -2,7 +2,7 @@
 fest_type: festival
 fest_id: CA0001
 fest_name: cans
-fest_status: completed
+fest_status: planning
 fest_version: "1.0"
 fest_tracking: true
 fest_created: 2026-08-19T04:52:22.528463-06:00
@@ -25,7 +25,7 @@ fest_created: 2026-08-19T04:52:22.528463-06:00
 - Private GitHub repo `veronica-agent/cans`
 - `cans say` and `cans` TUI
 - Default clone of her kept ref wav
-- `cans keep take.wav -text WORDS`
+- `cans keep take.wav`
 - Charm TUI + VHS GIF
 - Python/MLX sidecar only if the 0.6B clone will not run from Go
 - Festival snapshot copied into the repo
