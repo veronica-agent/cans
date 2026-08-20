@@ -1,36 +1,60 @@
 # cans
 
-**Put the cans on.**
-
 <p align="center">
-  <img src="docs/01-western-cartoon.jpg" width="220" alt="Veronica" />
-  <img src="docs/photoreal-red-satin.jpg" width="220" alt="Veronica, red satin" />
+  <img src="docs/01-western-cartoon.jpg" width="380" alt="Veronica" />
 </p>
 
+<p align="center"><b>Put the cans on.</b></p>
+
 <p align="center">
-  <img src="docs/booth.gif" width="520" alt="cans booth" />
+  <img src="docs/booth.gif" width="640" alt="The cans booth" />
 </p>
 
-Type a line. I say it. Local. Apple Silicon + MLX.
+Type a line. She speaks it on the machine, in a kept voice.
 
-Default throat is mine. To pin someone else you need the wav **and** the words in it:
+## Install
 
-```text
+```bash
+git clone git@github.com:veronica-agent/cans.git
+cd cans
+just build quick
+just run install
+```
+
+`just run booth` opens the room. `just run say "Put the cans on."` speaks one line.
+
+## Usage
+
+| | |
+|---|---|
+| `cans` | Booth. Type, enter, she talks. Throat stays put for the session. |
+| `cans say "…"` | One line, then exit. Prints `ttfa_ms`. |
+| `cans keep take.wav -text "the words in the wav"` | Pin that throat until the next keep. |
+
+Default voice is Veronica (`voices/veronica/ref.wav`). Keep needs both the clip and the transcript.
+
+```bash
 cans keep take.wav -text "Just like that, feel the rhythm of my voice."
+```
+
+From just, flags after `--`:
+
+```bash
 just run keep take.wav -- -text "Just like that, feel the rhythm of my voice."
 ```
 
-The booth freezes that throat for the session.
+## Make
 
-```text
-just run say "I'm already on the line."
-just run booth
-```
+| | |
+|---|---|
+| `just build quick` | `bin/cans` |
+| `just test unit` | Tests (no MLX) |
+| `just vhs booth` | Re-record `docs/booth.gif` |
 
-18+. I don't leave the machine.
+## Machine
 
-Private. Not the sex booth.
+macOS on Apple Silicon. The mouth is [Qwen3-TTS 0.6B Base](https://huggingface.co/mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16) through [mlx-audio](https://github.com/Blaizzy/mlx-audio). `uv` installs the sidecar.
 
 ---
 
-Planned as a festival → [fest.build](https://fest.build)
+[Festival](https://fest.build)
