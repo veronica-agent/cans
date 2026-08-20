@@ -22,7 +22,7 @@ func TestMachineCheck(t *testing.T) {
 func TestDiagnoseMissingPayload(t *testing.T) {
 	t.Setenv("CANS_HOME", t.TempDir())
 	t.Setenv("CANS_ROOT", t.TempDir())
-	checks := Diagnose(context.Background(), false)
+	checks := Diagnose(context.Background())
 	by := map[string]Check{}
 	for _, c := range checks {
 		by[c.Name] = c
@@ -43,7 +43,7 @@ func TestDiagnoseAfterMaterialize(t *testing.T) {
 	if err := ship.Materialize(root); err != nil {
 		t.Fatal(err)
 	}
-	checks := Diagnose(context.Background(), false)
+	checks := Diagnose(context.Background())
 	by := map[string]Check{}
 	for _, c := range checks {
 		by[c.Name] = c

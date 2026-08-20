@@ -1,17 +1,13 @@
 package tts
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
-	"github.com/veronica-agent/cans/internal/audio"
 	"github.com/veronica-agent/cans/internal/keep"
-	"github.com/veronica-agent/cans/internal/ship"
 )
 
 // Result is one spoken line.
@@ -21,15 +17,11 @@ type Result struct {
 	SampleRate int    `json:"sample_rate"`
 }
 
-func sidecarBin() string {
-	if b := os.Getenv("CANS_SAY_BIN"); b != "" {
-		return b
-	}
-	return ship.Sidecar(ship.Root())
-}
-
 // Say clones text with the current throat.
-func Say(text string) (Result, error) {
+func Say(ctx context.Context, text string) (Result, error) {
+	if err := ctx.Err(); err != nil {
+		return Result{}, err
+	}
 	text = strings.TrimSpace(text)
 	if text == "" {
 		return Result{}, fmt.Errorf("say: empty text")
@@ -38,76 +30,26 @@ func Say(text string) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
-	return SayWith(text, cur)
+	return SayWith(ctx, text, cur)
 }
 
-// SayWith clones text using a frozen throat (booth holds this for the session).
-func SayWith(text string, cur keep.Current) (Result, error) {
-	text = strings.TrimSpace(text)
-	if text == "" {
-		return Result{}, fmt.Errorf("say: empty text")
+// SayWith clones text using a frozen throat.
+func SayWith(ctx context.Context, text string, cur keep.Current) (Result, error) {
+	if err := ctx.Err(); err != nil {
+		return Result{}, err
 	}
-	if strings.TrimSpace(cur.RefText) == "" {
-		return Result{}, fmt.Errorf("say: empty ref text")
+	if os.Getenv("CANS_SAY_BIN") != "" {
+		return sayBin(text, cur)
 	}
-	bin := sidecarBin()
-	var cmd *exec.Cmd
-	if strings.HasSuffix(bin, ".py") {
-		if ship.LookUV() == "" {
-			return Result{}, fmt.Errorf("say: need uv on PATH — brew install uv")
-		}
-		root := ship.Root()
-		if !ship.Complete(root) {
-			root = ship.Shipped()
-		}
-		cmd = exec.Command("uv", "run", "--project", root, "--locked", "python", bin,
-			"--text", text, "--ref", cur.Wav, "--ref-text", cur.RefText)
-		cmd.Dir = root
-		cmd.Env = ship.Env(os.Environ())
-	} else {
-		cmd = exec.Command(bin, "--text", text, "--ref", cur.Wav, "--ref-text", cur.RefText)
+	sess, err := Open(ctx)
+	if err != nil {
+		return Result{}, err
 	}
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
-		msg := strings.TrimSpace(stderr.String())
-		if msg == "" {
-			msg = err.Error()
-		}
-		return Result{}, fmt.Errorf("say: %s", msg)
-	}
-	line := lastJSONLine(stdout.Bytes())
-	if line == nil {
-		return Result{}, fmt.Errorf("say: sidecar printed no json (%q)", stdout.String())
-	}
-	var r Result
-	if err := json.Unmarshal(line, &r); err != nil {
-		return Result{}, fmt.Errorf("say: bad sidecar json: %w (%q)", err, stdout.String())
-	}
-	if r.Wav == "" {
-		return Result{}, fmt.Errorf("say: sidecar returned no wav")
-	}
-	if err := audio.HeaderOK(r.Wav); err != nil {
-		return Result{}, fmt.Errorf("say: %w", err)
-	}
-	return r, nil
+	defer sess.Close()
+	return sess.Say(ctx, text, cur)
 }
 
-func lastJSONLine(raw []byte) []byte {
-	var last []byte
-	for _, line := range bytes.Split(bytes.TrimSpace(raw), []byte("\n")) {
-		line = bytes.TrimSpace(line)
-		var r Result
-		if json.Unmarshal(line, &r) == nil && r.Wav != "" {
-			last = line
-		}
-	}
-	return last
-}
-
-// RemoveTemp deletes a sidecar wav if it lives under the process temp dir.
-// Kept refs under CANS_HOME and shipped voices are left alone.
+// RemoveTemp deletes a synth wav if it lives under the process temp dir.
 func RemoveTemp(path string) {
 	if path == "" {
 		return

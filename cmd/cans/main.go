@@ -22,7 +22,7 @@ var (
 
 const usage = `cans — put the cans on.
 
-Apple Silicon + MLX. The mouth is Qwen3-TTS 0.6B Base cloning a wav.
+Apple Silicon. The mouth is a native Qwen3-TTS worker cloning a wav.
 
   cans                         booth (throat frozen for the session)
   cans say <text>              speak one line
@@ -46,7 +46,7 @@ func run(args []string) int {
 			fmt.Fprintln(stderr, err)
 			return 1
 		}
-		if err := booth.Run(keep.Quote(), throat); err != nil {
+		if err := booth.Run(context.Background(), keep.Quote(), throat); err != nil {
 			fmt.Fprintln(stderr, err)
 			return 1
 		}
@@ -63,7 +63,7 @@ func run(args []string) int {
 			fmt.Fprintln(stderr, err)
 			return 1
 		}
-		r, err := tts.Say(text)
+		r, err := tts.Say(context.Background(), text)
 		if err != nil {
 			fmt.Fprintln(stderr, err)
 			return 1

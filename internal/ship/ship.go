@@ -26,8 +26,27 @@ func Home() string {
 // Shipped is the extracted payload directory.
 func Shipped() string { return filepath.Join(Home(), "shipped") }
 
-// Venv is the uv project environment (mlx-audio lives here).
+// Venv is the leftover uv tree. Product speech does not use it.
 func Venv() string { return filepath.Join(Home(), "venv") }
+
+// Native is the qwen3-tts-worker install root.
+func Native() string { return filepath.Join(Home(), "native") }
+
+// WorkerBin is qwen3-tts-worker. CANS_WORKER_BIN overrides.
+func WorkerBin() string {
+	if b := os.Getenv("CANS_WORKER_BIN"); b != "" {
+		return b
+	}
+	return filepath.Join(Native(), "bin", "qwen3-tts-worker")
+}
+
+// WorkerModels is the GGUF + presets directory. CANS_WORKER_MODELS overrides.
+func WorkerModels() string {
+	if d := os.Getenv("CANS_WORKER_MODELS"); d != "" {
+		return d
+	}
+	return filepath.Join(Native(), "models")
+}
 
 // HFHome is the Hugging Face cache for the 0.6B clone model.
 func HFHome() string { return filepath.Join(Home(), "hf") }
