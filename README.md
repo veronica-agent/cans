@@ -67,4 +67,4 @@ The CLI is Go. The mouth is [Qwen3-TTS 0.6B](https://huggingface.co/mlx-communit
 
 ---
 
-[Festival](https://fest.build)
+Built with [Festival](https://fest.build)
