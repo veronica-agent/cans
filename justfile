@@ -30,6 +30,14 @@ mod dist '.justfiles/dist.just'
 install:
     just build install
 
+[doc('remove installed cans binaries and leftover uv venv')]
+uninstall:
+    just build uninstall
+
+[doc('remove ~/.cans state')]
+uninstall-home:
+    just build uninstall-home
+
 [private]
 default:
     @echo "cans — put the cans on."

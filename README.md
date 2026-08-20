@@ -55,7 +55,7 @@ cd cans
 just install
 ```
 
-`just install` (same as `just run install`) is `go install` into `$(go env GOBIN)`, or `$(go env GOPATH)/bin` if GOBIN is empty. Unpack the worker as above before `cans`.
+`just install` (same as `just run install`) is `go install` into `$(go env GOBIN)`, or `$(go env GOPATH)/bin` if GOBIN is empty. Unpack the worker as above before `cans`. `just uninstall` removes the binary and leftover `~/.cans/venv`. `just uninstall-home` removes `~/.cans`.
 
 </details>
 
