@@ -25,7 +25,7 @@ just run install
 
 ## Usage
 
-| | |
+| Command | |
 |---|---|
 | `cans` | Booth. Type, enter, she talks. Throat stays put for the session. |
 | `cans say "…"` | One line, then exit. Prints `ttfa_ms`. |
@@ -45,7 +45,7 @@ just run keep take.wav -- -text "Just like that, feel the rhythm of my voice."
 
 ## Make
 
-| | |
+| Recipe | |
 |---|---|
 | `just build quick` | `bin/cans` |
 | `just test unit` | Tests (no MLX) |
