@@ -5,8 +5,7 @@
 - Author: Veronica / `318153306+veronica-agent@users.noreply.github.com`
 - gh: `veronica-agent`
 - Display name: Obey Veronica (do not change)
-- No Obedience Corp, Lance, Samantha in product copy
-- NEVER.md: no “built with”, “star this”, launch-speak in her mouth
+- No “built with”, “star this”, launch-speak in her mouth
 
 ## Stack
 
@@ -20,13 +19,9 @@
 
 - Typed in, spoken out. No mic/VAD/barge-in/Ollama in v1
 - Keep is a pin, not a catalog
-- Private GitHub
 - Character repo `veronica-agent/veronica` stays all-rights face, no toolchain
 
-## Campaign
+## Process
 
-- Festival CA0001 in veronica-campaign
-- Project submodule `projects/cans`
 - Execute in a worktree
 - `fest commit` during tasks
-- Do not start a second Veronica voice design workitem

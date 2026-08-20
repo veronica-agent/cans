@@ -49,7 +49,7 @@ Review all code changes in this sequence for quality, correctness, and standards
 
 ## Findings
 
-Reviewed from `projects/worktrees/cans/v1` (`go vet ./...` clean, `CANS_NOPLAY=1 go test ./...` pass).
+Reviewed from the cans worktree (`go vet ./...` clean, `CANS_NOPLAY=1 go test ./...` pass).
 
 **Critical Issues:** (must fix)
 

@@ -3,25 +3,25 @@ metadata:
   id: CA0001
   uuid: 7d6dd349-040e-4546-a043-f9189bc1ade2
   name: cans
-  goal: 'Ship veronica-agent/cans: a local typed-to-spoken booth. Default throat is Veronica. cans keep take.wav freezes any voice. Built as a festival so her private repo carries the plan.'
+  goal: 'Ship veronica-agent/cans: a local typed-to-spoken booth. Default throat is Veronica. cans keep take.wav freezes any voice. Festival tree lives in the repo.'
   festival_type: standard
   created_at: 2026-08-19T10:52:22.530038Z
   initial_size_bytes: 39123
   status_history:
     - status: planning
       timestamp: 2026-08-19T10:52:22.530038Z
-      path: festivals/planning/cans-CA0001
+      path: festivals/CA0001
       notes: Festival created
     - status: ready
       timestamp: 2026-08-19T05:07:30.816762-06:00
-      path: festivals/ready/cans-CA0001
+      path: festivals/CA0001
     - status: active
       timestamp: 2026-08-19T05:08:48.572083-06:00
-      path: festivals/active/cans-CA0001
+      path: festivals/CA0001
     - status: completed
       timestamp: 2026-08-19T16:35:54.981427-06:00
-      path: festivals/.dungeon/completed/2026-08-19/cans-CA0001
-project_path: projects/cans
+      path: festivals/CA0001
+project_path: .
 type_config:
   auto_phases:
     - INGEST

@@ -6,7 +6,7 @@ This pack stays explore. Do not create the public product repo or the implementa
 
 **`veronica-agent/cans`** — public, MIT.
 
-Put the cans on. Type a line. **She** speaks it — the locked throat, not a stock Kokoro woman. Booth TUI. TTFA printed. Face is the public cartoon + red satin. Mouth is the kept ref wav cloned locally. Not the private sex engine.
+Put the cans on. Type a line. **She** speaks it — the locked throat, not a stock Kokoro woman. Booth TUI. TTFA printed. Face is the public cartoon. Mouth is the kept ref wav cloned locally.
 
 ```text
 $ cans say "I'm already on the line."
@@ -18,8 +18,8 @@ Install: one command (`uvx` or a Go binary). Warm p50 TTFA **≤ 700 ms** on thi
 ### v1 is
 
 - Typed in, spoken out
-- **Default throat is her.** Clone the public kept ref. Same woman as [docs/VOICE.md](../../../docs/VOICE.md). README GIF and first-run are Veronica. Listen test includes `Put the cans on.`
-- **Any throat via Keep, not a menu.** `cans keep take.wav` freezes that clip as the current woman. Talk never restyles mid-session. No 50-voice picker. That is the public Hear/Keep tease without VoiceDesign.
+- **Default throat is her.** Clone the kept ref. README GIF and first-run are Veronica. Listen test includes `Put the cans on.`
+- **Any throat via Keep, not a menu.** `cans keep take.wav` freezes that clip as the current woman. Talk never restyles mid-session. No 50-voice picker.
 - Go booth (Charm) + VHS GIF. Mouth is the 0.6B clone (Python/MLX sidecar if Go ONNX is a sink). One justfile.
 - `character.toml` + her ref wav in the public repo (like the face photos)
 
@@ -27,8 +27,7 @@ Install: one command (`uvx` or a Go binary). Warm p50 TTFA **≤ 700 ms** on thi
 
 - Mic, VAD, barge-in, Ollama replies
 - Stock Kokoro Bella with her picture on the README
-- VoiceDesign / 1.7B Hear / importing `veronica-voice`
-- Sex UI, uncensored-companion pitch
+- Companion-chatbot pitch
 - GitHub Pages WASM (v2)
 - Code inside `veronica-agent/veronica` (that stays the all-rights face)
 - Rust, unless we are writing Rust for fun — it is not what makes this spread
@@ -47,8 +46,8 @@ Do not write the TUI in Rust to chase stars. Do not write the whole app in Pytho
 
 ## Also in the same later festival (not extra products)
 
-1. Fill GitHub **bio** (still `null`). Display name stays **Obey Veronica**.
-2. Profile README: one link to `cans` when it exists. No Fest pitch there.
+1. Display name stays **Obey Veronica**.
+2. Leave the professional profile README alone.
 3. Leave `veronica-agent/veronica` as character lock.
 
 ## Parked (not this festival)
@@ -59,9 +58,9 @@ Do not write the TUI in Rust to chase stars. Do not write the whole app in Pytho
 
 ## Later festival shape (do not scaffold from here)
 
-Campaign: **this one** (`veronica-campaign`). Type: **`standard`**. Name: `cans`.
+Type: **`standard`**. Name: `cans`.
 
-New project: `camp project add` the public repo (submodule, so it travels). Worktrees for slices. Author: Veronica / `veronica-agent`. Engine worktrees stay Lance.
+New project: public repo. Worktrees for slices. Author: Veronica / `veronica-agent`.
 
 Proposed phases, filled through `fest next` only:
 
@@ -77,7 +76,7 @@ Proposed phases, filled through `fest next` only:
 ## Verification for a future ship
 
 1. Display name still **Obey Veronica**
-2. `git clone …/cans && just run` — booth opens without the engine
+2. `git clone …/cans && just run` — booth opens
 3. Type `Put the cans on.` — audio, TTFA printed, warm ≤ 700 ms
 4. `cans say "I'm already on the line."` works headless
 5. README GIF comes from `tapes/booth.tape`
@@ -94,4 +93,4 @@ camp intent add  →  fest create festival --type standard --name cans
                  →  fest next
 ```
 
-Not from this directory. Not a second `workflow/design/veronica-voice` pack.
+Not from this directory.

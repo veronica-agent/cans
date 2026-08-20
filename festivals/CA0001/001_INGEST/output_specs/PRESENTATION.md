@@ -4,18 +4,18 @@ User already directed: build the festival and implement. Specs below match that.
 
 ## What we are building
 
-Private `veronica-agent/cans`. Type a line, **she** says it. `cans keep take.wav` pins anyone else. Go Charm booth. Clone sidecar if needed.
+`veronica-agent/cans`. Type a line, **she** says it. `cans keep take.wav` pins anyone else. Go Charm booth. Clone sidecar if needed.
 
 ## Locked (do not re-ask)
 
 | Decision | Value |
 |----------|--------|
 | Name | cans |
-| Visibility | private |
+| Visibility | public |
 | Default voice | Veronica kept ref, cloned |
 | Other voices | keep a wav, not a menu |
 | Language | Go TUI; Python only for clone |
-| Not | Rust, Kokoro Bella, engine import, mic, Ollama |
+| Not | Rust, Kokoro Bella, mic, Ollama |
 
 ## P0
 

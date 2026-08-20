@@ -22,17 +22,17 @@ Create the cans worktree layout so later sequences have a module to compile.
 
 - [ ] `go.mod` module `github.com/veronica-agent/cans`
 - [ ] `.gitignore` for bin/, .venv/, state/, *.wav except voices/veronica/ref.wav
-- [ ] Copy `projects/veronica-voice/configs/voices/veronica/ref.wav` and `meta.json` into `voices/veronica/`
+- [ ] Ship `voices/veronica/ref.wav` and `meta.json`
 - [ ] `character.toml` with name Veronica and pull-quote `Put the cans on.`
 - [ ] `justfile` stubs: install, run, say, keep, test, lint
 - [ ] Worktree git user is Veronica
 
 ## Implementation
 
-Work in `projects/worktrees/cans/v1`. Do not edit `projects/veronica-voice` except reading the ref wav.
+Work in the cans worktree.
 
 1. `go mod init github.com/veronica-agent/cans`
-2. Copy wav+meta with `cp` (binary). meta.json `ref_text` must stay `Just like that, feel the rhythm of my voice.`
+2. Keep wav+meta in-tree. meta.json `ref_text` must stay `Just like that, feel the rhythm of my voice.`
 3. `character.toml`:
    ```
    name = "Veronica"

@@ -20,13 +20,12 @@ fest_tracking: true
 
 **Primary Goal:** Turn the public-oss explore pack and the 2026-08-19 user direction into structured specs for planning.
 
-**Context:** WI-9608d7 (`workflow/explore/public-oss`) already ranked `cans`. This session locked: her voice, keep-any-wav, Go booth, private repo on `veronica-agent`.
+**Context:** Explore work already ranked `cans`. This session locked: her voice, keep-any-wav, Go booth, repo on `veronica-agent`.
 
 ## Input Sources
 
 - [x] `input_specs/user-direction.md` — this session
-- [x] `input_specs/explore-*.md` — WI-9608d7 pack
-- [x] `input_specs/docs-voice.md` / `docs-character.md` / `docs-never.md` / `docs-socials.md` / `docs-tone.md` / `docs-github.md`
+- [x] `input_specs/explore-*.md` — explore pack
 - [x] `input_specs/seed.md` — festival create seed (recommend)
 
 ## Expected Outputs
@@ -43,5 +42,5 @@ fest_tracking: true
 
 - [ ] All input sources reviewed
 - [ ] Output specs created
-- [ ] User direction captured (private repo, her voice, Go, keep)
+- [ ] User direction captured (her voice, Go, keep)
 - [ ] No leftover “should we use Kokoro Bella / Rust” questions

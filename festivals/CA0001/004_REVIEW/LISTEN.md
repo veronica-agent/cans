@@ -1,11 +1,11 @@
 # Review notes — 2026-08-19
 
-Ran from `projects/worktrees/cans/v1`.
+Ran from the cans worktree.
 
 | Check | Result |
 |-------|--------|
 | `git log -1` author | Veronica `<318153306+veronica-agent@users.noreply.github.com>` |
-| `gh repo view veronica-agent/cans` | PRIVATE |
+| `gh repo view veronica-agent/cans` | `veronica-agent/cans` |
 | `fest validate` | 100 |
 | `CANS_NOPLAY=1 go test ./...` | pass |
 | `cans say "Put the cans on."` | **spoke.** `ttfa_ms=815` |

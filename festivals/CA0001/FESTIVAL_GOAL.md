@@ -18,9 +18,9 @@ fest_tracking: true
 
 ## Festival Objective
 
-**Primary Goal:** Ship `veronica-agent/cans` (private): type a line, Veronica speaks it locally. `cans keep take.wav` freezes any throat.
+**Primary Goal:** Ship `veronica-agent/cans`: type a line, Veronica speaks it locally. `cans keep take.wav` freezes any throat.
 
-**Vision:** A Charm booth you open with one command. First run is her kept ref, cloned. README GIF looks like a record sleeve. The festival tree lives in the repo so the plan is visible even while the GitHub repo stays private. Commits are Veronica.
+**Vision:** A Charm booth you open with one command. First run is her kept ref, cloned. README GIF looks like a record sleeve. The festival tree lives in the repo. Commits are Veronica.
 
 ## Success Criteria
 
@@ -30,7 +30,7 @@ fest_tracking: true
 - [ ] `cans` opens the booth TUI; typed lines speak; TTFA printed
 - [ ] `cans keep take.wav` switches the throat; talk does not restyle mid-session
 - [ ] Default character is her public faces + ref wav
-- [ ] Repo is private on `veronica-agent`; author is Veronica
+- [ ] Author is Veronica
 
 ### Quality Success
 
@@ -51,5 +51,5 @@ fest_tracking: true
 ## Complete When
 
 - [ ] All phases completed
-- [ ] `just say` and `just run` work from a clone of `veronica-agent/cans` without `veronica-voice`
+- [ ] `just say` and `just run` work from a clone of `veronica-agent/cans`
 - [ ] Git log authors are Veronica / `318153306+veronica-agent@users.noreply.github.com`
