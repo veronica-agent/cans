@@ -26,7 +26,7 @@ install:
     fi
     echo "installed ${dest}/cans"
 
-# Remove go-installed / brew / ./bin cans, plus leftover uv venv.
+# Remove every cans install: go/brew bins, ./bin, and ~/.cans.
 uninstall:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -44,20 +44,10 @@ uninstall:
         brew uninstall --formula --force cans
     fi
     home="${CANS_HOME:-$HOME/.cans}"
-    if [ -d "${home}/venv" ]; then
-        rm -rf "${home}/venv"
-        echo "removed ${home}/venv"
+    if [ -e "$home" ]; then
+        rm -rf "$home"
+        echo "removed ${home}"
     fi
-    echo "keep/shipped still in ${home} — just uninstall-home"
 
-# Remove ~/.cans (keep, shipped, native, venv).
 uninstall-home:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    home="${CANS_HOME:-$HOME/.cans}"
-    if [ ! -e "$home" ]; then
-        echo "no ${home}"
-        exit 0
-    fi
-    rm -rf "$home"
-    echo "removed ${home}"
+    just uninstall
