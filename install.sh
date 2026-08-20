@@ -116,4 +116,4 @@ case ":${PATH}:" in
 	;;
 esac
 
-echo "next: unpack qwen3-tts-native into ~/.cans/native, then cans doctor"
+echo "next: cans doctor"

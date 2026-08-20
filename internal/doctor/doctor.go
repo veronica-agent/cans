@@ -32,6 +32,10 @@ func Run(ctx context.Context, stdout, stderr io.Writer) error {
 		fmt.Fprintln(stderr, err)
 		return err
 	}
+	if err := ship.EnsureNative(ctx, stderr); err != nil {
+		fmt.Fprintln(stderr, err)
+		return err
+	}
 	checks := Diagnose(ctx)
 	printReport(stdout, checks)
 	for _, c := range checks {
@@ -64,7 +68,7 @@ func machineCheck() Check {
 func workerCheck() Check {
 	p := ship.WorkerBin()
 	if _, err := os.Stat(p); err != nil {
-		return Check{Name: "worker", Hint: "native mouth missing — unpack qwen3-tts-native under ~/.cans/native"}
+		return Check{Name: "worker", Hint: "run cans doctor (fetches the native mouth once)"}
 	}
 	return Check{Name: "worker", Detail: p, OK: true}
 }
@@ -139,8 +143,8 @@ func Prepare(ctx context.Context, stderr io.Writer) error {
 	if err := ship.Ensure(); err != nil {
 		return err
 	}
-	if _, err := os.Stat(ship.WorkerBin()); err != nil {
-		return fmt.Errorf("native mouth missing — cans doctor")
+	if err := ship.EnsureNative(ctx, stderr); err != nil {
+		return err
 	}
 	return nil
 }
