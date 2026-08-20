@@ -48,8 +48,56 @@ func TestEnsureUsesShippedWhenRootIncomplete(t *testing.T) {
 	if !Complete(Shipped()) {
 		t.Fatal("expected shipped payload")
 	}
+	if !currentPayload(Shipped()) {
+		t.Fatal("expected stamp")
+	}
 	if Root() == Shipped() {
 		t.Fatal("CANS_ROOT must still win even when incomplete")
+	}
+}
+
+func TestEnsureRefreshesStaleShipped(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("CANS_HOME", home)
+	t.Setenv("CANS_ROOT", t.TempDir())
+	if err := Ensure(); err != nil {
+		t.Fatal(err)
+	}
+	sidecar := Sidecar(Shipped())
+	if err := os.WriteFile(sidecar, []byte("stale"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(Shipped(), stampFile), []byte("old\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := Ensure(); err != nil {
+		t.Fatal(err)
+	}
+	got, err := os.ReadFile(sidecar)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Equal(got, []byte("stale")) {
+		t.Fatal("expected rematerialize")
+	}
+	if !currentPayload(Shipped()) {
+		t.Fatal("stamp should match embed")
+	}
+}
+
+func TestEnsureSkipsCompleteRoot(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("CANS_HOME", home)
+	root := t.TempDir()
+	if err := Materialize(root); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("CANS_ROOT", root)
+	if err := Ensure(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(Shipped()); !os.IsNotExist(err) {
+		t.Fatalf("shipped should not exist: %v", err)
 	}
 }
 

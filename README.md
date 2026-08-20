@@ -18,7 +18,7 @@
 
 ## Install
 
-macOS, Apple Silicon.
+macOS, Apple Silicon. Needs [uv](https://docs.astral.sh/uv/) before she speaks (`brew` pulls it in).
 
 ```bash
 brew install --HEAD veronica-agent/tap/cans
@@ -36,19 +36,22 @@ curl -fsSL https://raw.githubusercontent.com/veronica-agent/cans/main/install.sh
 cans
 ```
 
+Until a tagged release exists, that script needs Go and installs `cans` onto PATH.
+
 </details>
 
 <details>
 <summary>From source</summary>
 
 ```bash
-git clone git@github.com:veronica-agent/cans.git
+git clone https://github.com/veronica-agent/cans.git
 cd cans
+brew install uv
 just install
 cans
 ```
 
-`just install` (same as `just run install`) is `go install` into `$(go env GOPATH)/bin`.
+`just install` (same as `just run install`) is `go install` into `$(go env GOBIN)`, or `$(go env GOPATH)/bin` if GOBIN is empty.
 
 </details>
 

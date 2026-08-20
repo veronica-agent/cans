@@ -90,8 +90,7 @@ download_release() {
 
 install_with_go() {
 	command -v go >/dev/null 2>&1 || return 1
-	GOPRIVATE="github.com/veronica-agent/*" \
-		go install "github.com/${REPO}/cmd/cans@main"
+	go install "github.com/${REPO}/cmd/cans@main"
 	gobin=$(go env GOBIN)
 	[ -n "$gobin" ] || gobin="$(go env GOPATH)/bin"
 	[ -f "${gobin}/cans" ] || return 1
