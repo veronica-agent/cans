@@ -27,7 +27,7 @@ Apple Silicon + MLX. The mouth is Qwen3-TTS 0.6B Base cloning a wav.
   cans                         booth (throat frozen for the session)
   cans say <text>              speak one line
   cans keep <wav> -text WORDS  freeze this throat (both orders work)
-  cans doctor                  install sidecar, check the machine
+  cans doctor                  set up the mouth, check the machine
   cans version                 print version
 `
 

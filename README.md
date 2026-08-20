@@ -1,69 +1,65 @@
-# cans
+<h1 align="center">cans</h1>
 
 <p align="center">
-  <img src="docs/01-western-cartoon.jpg" width="380" alt="Veronica" />
+  <img src="docs/01-western-cartoon.jpg" width="220" alt="Veronica" />
 </p>
 
 <p align="center"><b>Put the cans on.</b></p>
 
-<p align="center">
-  <img src="docs/booth.gif" width="640" alt="The cans booth" />
-</p>
+<p align="center">Type a line. She speaks it.</p>
 
-Type a line. She speaks it on the machine, in a kept voice.
+<p align="center">
+  <img src="docs/booth.gif" width="680" alt="The cans booth" />
+</p>
 
 ## Install
 
-macOS on Apple Silicon.
+macOS, Apple Silicon.
 
 ```bash
 brew install --HEAD veronica-agent/tap/cans
-cans doctor
 cans
 ```
 
-or:
+First run sets up the mouth. `cans doctor` if you want the checklist.
+
+<details>
+<summary>curl</summary>
 
 ```bash
 brew install uv
 curl -fsSL https://raw.githubusercontent.com/veronica-agent/cans/main/install.sh | sh
-cans doctor
+cans
 ```
 
-`cans doctor` extracts her clip, syncs the sidecar, and checks the machine. The first spoken line downloads [Qwen3-TTS 0.6B Base](https://huggingface.co/mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16) through [mlx-audio](https://github.com/Blaizzy/mlx-audio).
+</details>
 
-## Usage
-
-| Command | |
-|---|---|
-| `cans` | Booth. Type, enter, she talks. Throat stays put for the session. |
-| `cans say "…"` | One line, then exit. Prints `ttfa_ms`. |
-| `cans keep take.wav -text "the words in the wav"` | Pin that throat until the next keep. |
-| `cans doctor` | Sidecar + machine check. |
-| `cans version` | Print version. |
-
-Default voice is Veronica. Keep needs both the clip and the transcript.
-
-```bash
-cans keep take.wav -text "Just like that, feel the rhythm of my voice."
-```
-
-## From source
+<details>
+<summary>From source</summary>
 
 ```bash
 git clone git@github.com:veronica-agent/cans.git
 cd cans
-just build quick
-just run install
-./bin/cans doctor
+just install
+cans
 ```
 
-| Recipe | |
-|---|---|
-| `just build quick` | `bin/cans` |
-| `just test unit` | Tests (no MLX) |
-| `just dist snapshot` | Local goreleaser tarball |
-| `just vhs booth` | Re-record `docs/booth.gif` |
+`just install` builds `bin/cans` and copies it onto PATH (`/opt/homebrew/bin` or `~/.local/bin`). Override with `DEST`.
+
+</details>
+
+## Commands
+
+```bash
+cans
+cans say "Put the cans on."
+cans keep take.wav -text "the words in the wav"
+cans doctor
+```
+
+Keep needs the clip and the words spoken in it. Throat stays put for the session.
+
+The CLI is Go. The mouth is [Qwen3-TTS 0.6B](https://huggingface.co/mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16) on [MLX](https://github.com/Blaizzy/mlx-audio), which is Python, so `cans` starts that process for you.
 
 ---
 

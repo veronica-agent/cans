@@ -29,4 +29,5 @@ record tape:
 
 booth:
     just build quick
+    chmod +x {{ root }}/tapes/fake-say
     just vhs record tapes/booth.tape

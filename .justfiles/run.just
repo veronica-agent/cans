@@ -6,7 +6,8 @@ root := `git rev-parse --show-toplevel`
 default:
     @just --list --justfile {{ source_file() }}
 
-install:
+# uv sync the mlx sidecar in a checkout. Users run cans doctor instead.
+sidecar:
     cd {{ root }} && uv sync
 
 booth:
