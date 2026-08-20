@@ -8,12 +8,10 @@ Checked 2026-08-19 as `veronica-agent`. API: `https://github.com/veronica-agent`
 |-------|--------|--------|
 | Handle | `veronica-agent` | invent another |
 | Display name | **Obey Veronica** | rename to `Veronica` |
-| GitHub bio (spec) | `The sexiest voice assistant.` | founder pitch |
-| Org membership | none. Write collaborator on the campaign repo + engine | add her to Obedience-Corp |
+| GitHub bio | professional employee line | booth pitch |
+| Org membership | none | invent an org |
 
-[docs/GITHUB.md](../../../docs/GITHUB.md): commits are her email `318153306+veronica-agent@users.noreply.github.com`, SSH `github-veronica-agent`. `gh auth switch` is API only.
-
-[docs/phrases/SOCIALS.md](../../../docs/phrases/SOCIALS.md) still says the display name is **Veronica**. GitHub is **Obey Veronica** on purpose. This pack does not “correct” GitHub. SOCIALS can be updated later to match. Posts still never say Obey / Samantha / Obedience Corp ([NEVER.md](../../../docs/phrases/NEVER.md)).
+Commits are her email `318153306+veronica-agent@users.noreply.github.com`. GitHub is **Obey Veronica** on purpose. This pack does not “correct” GitHub.
 
 ## Live account (API)
 
@@ -29,29 +27,16 @@ Checked 2026-08-19 as `veronica-agent`. API: `https://github.com/veronica-agent`
 
 ## Public repos (created 2026-08-19)
 
-**[`veronica-agent/veronica-agent`](https://github.com/veronica-agent/veronica-agent)** — special profile README. Description: `The sexiest voice assistant.` Both faces, pin lines, link to `veronica`. Size 0, no topics.
+**[`veronica-agent/veronica-agent`](https://github.com/veronica-agent/veronica-agent)** — special profile README. Professional employee page. Leave it.
 
-**[`veronica-agent/veronica`](https://github.com/veronica-agent/veronica)** — public character. Description: `Local 18+ voice. I don't leave the machine.` Cartoon + red satin + `docs/CHARACTER.md`. License: **All rights reserved.** No code. Size 0, no topics.
+**[`veronica-agent/veronica`](https://github.com/veronica-agent/veronica)** — public character stills. All rights reserved. No code.
 
 Neither is a cloneable product. Neither mentions Festival. That is the hole this pack is for.
 
-## Private vs public
-
-| Surface | Who sees it | Job |
-|---------|-------------|-----|
-| `Obedience-Corp/veronica-campaign` | company | this workspace |
-| `lancekrogers/veronica-voice` | private | engine, studio, voices |
-| `veronica-agent/*` | the internet | character + anything we ship open |
-
-Do not put the engine or VoiceDesign on her public GitHub. The kept **ref wav** may ship with `cans` the same way the face photos already ship — that is her throat, not the booth.
-
 ## Voice rules for anything public
 
-From SOCIALS / NEVER, applied to READMEs:
-
-- First person. She is on the line. She does not launch.
-- No “star this”, “built with”, “we shipped”, “local-first uncensored voice companion”.
-- No Obedience Corp, Lance, Samantha in her mouth.
-- Stack names (Qwen, mlx, TTFA) stay out of social captions. A README may have one dry paragraph. She does not speak it.
+- She does not launch.
+- No “star this”, “built with”, “we shipped”.
+- Stack names stay out of social captions. A README may have one dry paragraph.
 
 Festival advertising is **chrome** (footer, topic, `festivals/` tree), not a quote.

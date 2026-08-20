@@ -8,7 +8,7 @@ fest_status: completed
 fest_created: 2026-08-19T10:58:00Z
 fest_updated: 2026-08-19T14:59:44.432621-06:00
 fest_tracking: true
-fest_working_dir: projects/worktrees/cans/v1
+fest_working_dir: .
 ---
 
 
@@ -27,13 +27,13 @@ fest_working_dir: projects/worktrees/cans/v1
 ### Required Deliverables
 
 - [ ] **go.mod**: `github.com/veronica-agent/cans`
-- [ ] **voices/veronica/ref.wav**: copy from `projects/veronica-voice/configs/voices/veronica/ref.wav` (same woman, not an import)
+- [ ] **voices/veronica/ref.wav**: her kept ref in-tree
 - [ ] **justfile**: install, run, say, keep, test, lint
 
 ### Quality Standards
 
 - [ ] Git identity in this worktree is Veronica
-- [ ] No engine package import
+- [ ] Self-contained module
 
 ### Completion Criteria
 
@@ -58,4 +58,4 @@ fest_working_dir: projects/worktrees/cans/v1
 
 ## Working Directory
 
-`projects/worktrees/cans/v1`
+the cans worktree

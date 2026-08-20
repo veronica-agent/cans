@@ -20,10 +20,10 @@ Ship the sleeve.
 
 ## Requirements
 
-- [ ] README pull-quote is her. No star-beg, no built with, no Obedience Corp
-- [ ] Faces copied from `docs/character/` (cartoon + red satin)
-- [ ] Footer: `Planned as a festival → https://fest.build` as chrome, not a quote
-- [ ] `festivals/CA0001/` contains copies of FESTIVAL_GOAL.md and FESTIVAL_OVERVIEW.md
+- [ ] README pull-quote is her. No star-beg, no launch-speak
+- [ ] Cartoon in `docs/`
+- [ ] Footer: Built with Festival → https://fest.build as chrome, not a quote
+- [ ] `festivals/CA0001/` is the completed festival tree (public-safe copy)
 
 ## Done When
 

@@ -1,18 +1,16 @@
 # Public GitHub surface
 
-**WI-9608d7** · `explore-public-oss-2026-08-19` · **Open** · 2026-08-19
-
-Does not replace design `WI-6dfec1`. Does not touch `projects/veronica-voice`. This pack is research for **public repos on `veronica-agent`** before the voice booth is a thing a stranger can run.
+Explore pack for public repos on `veronica-agent`.
 
 ## Why this exists
 
-The engine is private. The campaign is company-side. Her GitHub user is the only public door, and as of this pack it is a profile plus a character repo with no product to clone.
+Her GitHub user is a profile plus a character repo with no product to clone.
 
-She needs something **simple, visual, and actually missing** — not another coding agent, not a slice of the 18+ booth. Build it later as a **festival** so the repo (and her graph) advertise [Festival](https://fest.build) without putting “built with” in her mouth.
+She needs something **simple, visual, and actually missing** — not another coding agent. Build it as a **festival** so the repo advertises [Festival](https://fest.build) without putting “built with” in her mouth.
 
 ## Identity lock
 
-GitHub display name stays **Obey Veronica**. That is intentional. Do not “fix” it to `Veronica`. Handle stays `veronica-agent`. Bio stays the GitHub line in [docs/phrases/SOCIALS.md](../../../docs/phrases/SOCIALS.md). Posts still do not say Obey, Samantha, or Obedience Corp ([NEVER.md](../../../docs/phrases/NEVER.md)).
+GitHub display name stays **Obey Veronica**. That is intentional. Handle stays `veronica-agent`. Leave the professional profile README alone.
 
 ## Pack
 
@@ -27,17 +25,10 @@ GitHub display name stays **Obey Veronica**. That is intentional. Do not “fix�
 
 ## Non-goals
 
-- Second Veronica **design** workitem
-- Editing the private engine
-- Creating the public product repo from this pack
+- Creating the product repo from this pack
 - Scaffolding the implementation festival from this pack
 - Renaming Obey Veronica
 
 ## How to continue
 
-```bash
-cd workflow/explore/public-oss
-fest next
-```
-
-When this pack is accepted: new festival in this campaign, new public repo on `veronica-agent`, `fest next` from there. Not from `live/`.
+When this pack is accepted: new festival, public repo on `veronica-agent`, `fest next` from there.

@@ -24,5 +24,5 @@ fest_tracking: true
 
 - [ ] Warm `cans say "Put the cans on."` is her, TTFA printed
 - [ ] `git log` authors are Veronica
-- [ ] `gh repo view veronica-agent/cans --json visibility` is PRIVATE
+- [ ] `gh repo view veronica-agent/cans` is `veronica-agent/cans`
 - [ ] `fest validate` on CA0001

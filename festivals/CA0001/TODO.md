@@ -1,6 +1,6 @@
 # Festival TODO - cans
 
-**Goal**: Ship private `veronica-agent/cans`: type a line, she speaks it.
+**Goal**: Ship `veronica-agent/cans`: type a line, she speaks it.
 **Status**: Active
 
 ## Quick Status

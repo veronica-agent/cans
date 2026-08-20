@@ -20,7 +20,7 @@ fest_tracking: true
 
 **Primary Goal:** A working `cans` binary in the v1 worktree: say, keep, booth.
 
-**Context:** Specs in 001_INGEST/output_specs. Decisions D001/D002. Execute at `projects/worktrees/cans/v1`.
+**Context:** Specs in 001_INGEST/output_specs. Decisions D001/D002. Execute in the cans worktree.
 
 ## Required Outcomes
 

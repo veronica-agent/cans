@@ -28,7 +28,7 @@ fest_tracking: true
 
 ## Implementation
 
-Follow `_clone` in `qwen.py:252`. Temperature 0.2. Play the wav path from JSON. `CANS_ROOT` defaults to the repo root when set by justfile.
+Temperature 0.2. Play the wav path from JSON. `CANS_ROOT` defaults to the repo root when set by justfile.
 
 ## Done When
 

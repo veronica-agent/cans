@@ -8,7 +8,7 @@ fest_status: completed
 fest_created: 2026-08-19T10:58:00Z
 fest_updated: 2026-08-19T16:31:50.092469-06:00
 fest_tracking: true
-fest_working_dir: projects/worktrees/cans/v1
+fest_working_dir: .
 ---
 
 
