@@ -74,6 +74,19 @@ func TestSayHelp(t *testing.T) {
 	}
 }
 
+func TestVersion(t *testing.T) {
+	var buf bytes.Buffer
+	old := stdout
+	stdout = &buf
+	defer func() { stdout = old }()
+	if code := run([]string{"version"}); code != 0 {
+		t.Fatalf("code %d", code)
+	}
+	if !strings.Contains(buf.String(), "cans") {
+		t.Fatalf("%q", buf.String())
+	}
+}
+
 func TestSayMock(t *testing.T) {
 	home := t.TempDir()
 	root := t.TempDir()

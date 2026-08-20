@@ -11,6 +11,7 @@ import (
 
 	"github.com/veronica-agent/cans/internal/audio"
 	"github.com/veronica-agent/cans/internal/keep"
+	"github.com/veronica-agent/cans/internal/ship"
 )
 
 // Result is one spoken line.
@@ -24,7 +25,7 @@ func sidecarBin() string {
 	if b := os.Getenv("CANS_SAY_BIN"); b != "" {
 		return b
 	}
-	return filepath.Join(keep.Root(), "sidecar", "say.py")
+	return ship.Sidecar(ship.Root())
 }
 
 // Say clones text with the current throat.
@@ -52,8 +53,17 @@ func SayWith(text string, cur keep.Current) (Result, error) {
 	bin := sidecarBin()
 	var cmd *exec.Cmd
 	if strings.HasSuffix(bin, ".py") {
-		cmd = exec.Command("uv", "run", "python", bin, "--text", text, "--ref", cur.Wav, "--ref-text", cur.RefText)
-		cmd.Dir = keep.Root()
+		if ship.LookUV() == "" {
+			return Result{}, fmt.Errorf("say: need uv on PATH — brew install uv")
+		}
+		root := ship.Root()
+		if !ship.Complete(root) {
+			root = ship.Shipped()
+		}
+		cmd = exec.Command("uv", "run", "--project", root, "--locked", "python", bin,
+			"--text", text, "--ref", cur.Wav, "--ref-text", cur.RefText)
+		cmd.Dir = root
+		cmd.Env = ship.Env(os.Environ())
 	} else {
 		cmd = exec.Command(bin, "--text", text, "--ref", cur.Wav, "--ref-text", cur.RefText)
 	}

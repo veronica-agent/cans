@@ -23,6 +23,9 @@ mod vhs '.justfiles/vhs.just'
 [doc('Run, say, keep, install Python sidecar')]
 mod run '.justfiles/run.just'
 
+[doc('Stamp embed, goreleaser snapshot')]
+mod dist '.justfiles/dist.just'
+
 [private]
 default:
     @echo "cans — put the cans on."
