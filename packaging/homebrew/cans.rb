@@ -8,7 +8,6 @@ class Cans < Formula
   depends_on "go" => :build
   depends_on arch: :arm64
   depends_on :macos
-  depends_on "uv"
 
   def install
     ldflags = "-s -w -X github.com/veronica-agent/cans/internal/ship.Version=#{version}"
@@ -17,8 +16,8 @@ class Cans < Formula
 
   def caveats
     <<~EOS
-      Apple Silicon. First run: cans doctor
-      Then: cans
+      Apple Silicon. Unpack qwen3-tts-native into ~/.cans/native
+      so bin/qwen3-tts-worker exists, then: cans doctor
     EOS
   end
 

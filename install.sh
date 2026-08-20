@@ -116,10 +116,4 @@ case ":${PATH}:" in
 	;;
 esac
 
-if ! command -v uv >/dev/null 2>&1; then
-	echo "uv is missing — brew install uv" >&2
-	echo "then: ${DEST}/cans doctor" >&2
-	exit 0
-fi
-
-echo "next: cans doctor"
+echo "next: unpack qwen3-tts-native into ~/.cans/native, then cans doctor"

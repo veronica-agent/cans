@@ -2,6 +2,7 @@ package tts
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -20,6 +21,7 @@ type Client struct {
 	cmd    *exec.Cmd
 	stdin  io.WriteCloser
 	stdout *bufio.Reader
+	stderr bytes.Buffer
 }
 
 type pcmResult struct {
@@ -52,13 +54,17 @@ func StartWorker(ctx context.Context, workerBin, modelDir string) (*Client, erro
 	if err != nil {
 		return nil, err
 	}
-	cmd.Stderr = io.Discard
+	c := &Client{cmd: cmd, stdin: stdin, stdout: bufio.NewReader(stdout)}
+	cmd.Stderr = &c.stderr
 	if err := cmd.Start(); err != nil {
 		return nil, err
 	}
-	c := &Client{cmd: cmd, stdin: stdin, stdout: bufio.NewReader(stdout)}
 	if err := c.readReady(ctx); err != nil {
+		diag := strings.TrimSpace(c.stderr.String())
 		_ = c.Close()
+		if diag != "" {
+			return nil, fmt.Errorf("%w (%s)", err, diag)
+		}
 		return nil, err
 	}
 	return c, nil

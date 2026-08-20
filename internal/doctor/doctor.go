@@ -23,7 +23,7 @@ type Check struct {
 	OK     bool
 }
 
-// Run extracts the payload, syncs the sidecar, and prints a report.
+// Run extracts the character payload and prints a machine report.
 func Run(ctx context.Context, stdout, stderr io.Writer) error {
 	if err := ctx.Err(); err != nil {
 		return err
@@ -32,7 +32,7 @@ func Run(ctx context.Context, stdout, stderr io.Writer) error {
 		fmt.Fprintln(stderr, err)
 		return err
 	}
-	checks := Diagnose(ctx, true)
+	checks := Diagnose(ctx)
 	printReport(stdout, checks)
 	for _, c := range checks {
 		if !c.OK {
@@ -43,9 +43,11 @@ func Run(ctx context.Context, stdout, stderr io.Writer) error {
 	return nil
 }
 
-// Diagnose inspects the machine. mlx is checked only when the venv exists.
-func Diagnose(ctx context.Context, mlx bool) []Check {
-	_ = mlx
+// Diagnose inspects the machine: OS/arch, native worker, payload, throat, play.
+func Diagnose(ctx context.Context) []Check {
+	if err := ctx.Err(); err != nil {
+		return []Check{{Name: "context", Hint: err.Error()}}
+	}
 	return []Check{machineCheck(), workerCheck(), payloadCheck(), throatCheck(), playCheck()}
 }
 

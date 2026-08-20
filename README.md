@@ -18,25 +18,31 @@
 
 ## Install
 
-macOS, Apple Silicon. Needs [uv](https://docs.astral.sh/uv/) before she speaks (`brew` pulls it in).
+macOS, Apple Silicon. No Python, no uv.
 
 ```bash
 brew install --HEAD veronica-agent/tap/cans
+```
+
+The mouth is a native [Qwen3-TTS worker](https://github.com/Obedience-Corp/qwen3-tts-native). `cans` does not download it yet. Unpack the darwin-arm64 tarball from [releases](https://github.com/Obedience-Corp/qwen3-tts-native/releases) so the worker is on disk:
+
+```bash
+mkdir -p ~/.cans/native
+tar -xzf qwen3-tts-native-darwin-arm64.tar.gz -C ~/.cans/native --strip-components=1
+cans doctor
 cans
 ```
 
-First run sets up the mouth. `cans doctor` if you want the checklist.
+`~/.cans/native/bin/qwen3-tts-worker` has to exist. `cans doctor` only checks; it does not fetch the tarball.
 
 <details>
 <summary>curl</summary>
 
 ```bash
-brew install uv
 curl -fsSL https://raw.githubusercontent.com/veronica-agent/cans/main/install.sh | sh
-cans
 ```
 
-Until a tagged release exists, that script needs Go and installs `cans` onto PATH.
+Until a tagged release exists, that script needs Go and installs `cans` onto PATH. Then unpack the worker as above.
 
 </details>
 
@@ -46,12 +52,10 @@ Until a tagged release exists, that script needs Go and installs `cans` onto PAT
 ```bash
 git clone https://github.com/veronica-agent/cans.git
 cd cans
-brew install uv
 just install
-cans
 ```
 
-`just install` (same as `just run install`) is `go install` into `$(go env GOBIN)`, or `$(go env GOPATH)/bin` if GOBIN is empty.
+`just install` (same as `just run install`) is `go install` into `$(go env GOBIN)`, or `$(go env GOPATH)/bin` if GOBIN is empty. Unpack the worker as above before `cans`.
 
 </details>
 

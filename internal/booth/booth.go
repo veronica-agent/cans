@@ -36,6 +36,7 @@ type model struct {
 	quote  string
 	throat keep.Current
 	sess   *tts.Session
+	ctx    context.Context
 	busy   bool
 	err    string
 }
@@ -45,7 +46,7 @@ type spokenMsg struct {
 	err  error
 }
 
-func New(quote string, throat keep.Current, sess *tts.Session) model {
+func New(quote string, throat keep.Current, sess *tts.Session, ctx context.Context) model {
 	ti := textinput.New()
 	ti.Placeholder = "type a line"
 	ti.PromptStyle = chrome
@@ -58,7 +59,10 @@ func New(quote string, throat keep.Current, sess *tts.Session) model {
 	if quote == "" {
 		quote = "Put the cans on."
 	}
-	return model{input: ti, status: "listen", quote: quote, throat: throat, sess: sess}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return model{input: ti, status: "listen", quote: quote, throat: throat, sess: sess, ctx: ctx}
 }
 
 func (m model) Init() tea.Cmd { return textinput.Blink }
@@ -81,7 +85,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.status = "speaking"
 			m.err = ""
 			m.input.SetValue("")
-			return m, speak(line, m.throat, m.sess)
+			return m, speak(m.ctx, line, m.throat, m.sess)
 		}
 	case spokenMsg:
 		m.busy = false
@@ -99,16 +103,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func speak(line string, throat keep.Current, sess *tts.Session) tea.Cmd {
+func speak(ctx context.Context, line string, throat keep.Current, sess *tts.Session) tea.Cmd {
 	return func() tea.Msg {
 		var (
 			r   tts.Result
 			err error
 		)
 		if sess != nil {
-			r, err = sess.Say(context.Background(), line, throat)
+			r, err = sess.Say(ctx, line, throat)
 		} else {
-			r, err = tts.SayWith(context.Background(), line, throat)
+			r, err = tts.SayWith(ctx, line, throat)
 		}
 		if err != nil {
 			return spokenMsg{err: err}
@@ -151,7 +155,7 @@ func Run(ctx context.Context, quote string, throat keep.Current) error {
 		sess = s
 		defer sess.Close()
 	}
-	p := tea.NewProgram(New(quote, throat, sess))
+	p := tea.NewProgram(New(quote, throat, sess, ctx))
 	_, err := p.Run()
 	return err
 }
