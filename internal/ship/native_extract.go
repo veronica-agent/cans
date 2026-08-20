@@ -41,13 +41,16 @@ func writeTarEntry(destRoot string, prefix *string, hdr *tar.Header, tr *tar.Rea
 	if strings.HasPrefix(hdr.Name, "/") || filepath.IsAbs(hdr.Name) {
 		return fmt.Errorf("refusing absolute path %q", hdr.Name)
 	}
+	if appleDouble(hdr.Name) {
+		return nil
+	}
 	if *prefix == "" {
 		if parts := strings.SplitN(hdr.Name, "/", 2); len(parts) > 1 {
 			*prefix = parts[0] + "/"
 		}
 	}
 	rel := strings.TrimPrefix(hdr.Name, *prefix)
-	if rel == "" || rel == "." {
+	if rel == "" || rel == "." || appleDouble(rel) {
 		return nil
 	}
 	target, err := safeJoin(destRoot, rel)
@@ -59,8 +62,48 @@ func writeTarEntry(destRoot string, prefix *string, hdr *tar.Header, tr *tar.Rea
 		return os.MkdirAll(target, 0o755)
 	case tar.TypeReg, tar.TypeRegA:
 		return writeTarFile(target, hdr.Mode, tr)
+	case tar.TypeSymlink:
+		return writeTarSymlink(target, hdr.Linkname)
 	default:
 		return nil
+	}
+}
+
+func appleDouble(name string) bool {
+	base := filepath.Base(name)
+	return strings.HasPrefix(base, "._") || base == ".DS_Store"
+}
+
+func writeTarSymlink(target, link string) error {
+	if filepath.IsAbs(link) {
+		return fmt.Errorf("refusing absolute symlink %q", link)
+	}
+	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+		return err
+	}
+	_ = os.Remove(target)
+	return os.Symlink(link, target)
+}
+
+func fixDylibNames(binDir string) {
+	var real string
+	for _, c := range []string{"libqwen3tts.0.1.0.dylib", "libqwen3tts.0.dylib", "libqwen3tts.dylib"} {
+		path := filepath.Join(binDir, c)
+		info, err := os.Stat(path)
+		if err == nil && info.Mode().IsRegular() {
+			real = c
+			break
+		}
+	}
+	if real == "" {
+		return
+	}
+	for _, name := range []string{"libqwen3tts.0.dylib", "libqwen3tts.dylib"} {
+		dst := filepath.Join(binDir, name)
+		if _, err := os.Lstat(dst); err == nil {
+			continue
+		}
+		_ = os.Symlink(real, dst)
 	}
 }
 

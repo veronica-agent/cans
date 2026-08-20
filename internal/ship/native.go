@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"runtime"
 )
 
@@ -19,6 +20,11 @@ func NativeReady() bool {
 	return err == nil
 }
 
+func dylibReady() bool {
+	_, err := os.Stat(filepath.Join(filepath.Dir(WorkerBin()), "libqwen3tts.0.dylib"))
+	return err == nil
+}
+
 // EnsureNative downloads and unpacks qwen3-tts-native if the worker is missing.
 func EnsureNative(ctx context.Context, log io.Writer) error {
 	if err := ctx.Err(); err != nil {
@@ -27,7 +33,8 @@ func EnsureNative(ctx context.Context, log io.Writer) error {
 	if os.Getenv("CANS_SAY_BIN") != "" {
 		return nil
 	}
-	if NativeReady() {
+	fixDylibNames(filepath.Join(Native(), "bin"))
+	if NativeReady() && dylibReady() {
 		return nil
 	}
 	url := os.Getenv("CANS_NATIVE_URL")
@@ -59,5 +66,6 @@ func EnsureNative(ctx context.Context, log io.Writer) error {
 		return fmt.Errorf("native mouth: unpack did not produce %s", WorkerBin())
 	}
 	_ = os.Chmod(WorkerBin(), 0o755)
+	fixDylibNames(filepath.Join(Native(), "bin"))
 	return nil
 }

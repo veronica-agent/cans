@@ -33,6 +33,9 @@ func TestEnsureNativeFromFile(t *testing.T) {
 	if !NativeReady() {
 		t.Fatal("worker missing after ensure")
 	}
+	if !dylibReady() {
+		t.Fatal("dylib missing after ensure")
+	}
 	if err := EnsureNative(context.Background(), nil); err != nil {
 		t.Fatal(err)
 	}
@@ -47,6 +50,28 @@ func TestEnsureNativeSHAMismatch(t *testing.T) {
 	t.Setenv("CANS_NATIVE_SHA256", "deadbeef")
 	if err := EnsureNative(context.Background(), nil); err == nil {
 		t.Fatal("expected sha mismatch")
+	}
+}
+
+func TestEnsureNativeHealsDylibLinks(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("CANS_HOME", home)
+	t.Setenv("CANS_WORKER_BIN", "")
+	bin := filepath.Join(home, "native", "bin")
+	if err := os.MkdirAll(bin, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(bin, "qwen3-tts-worker"), []byte("x"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(bin, "libqwen3tts.0.1.0.dylib"), []byte("d"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := EnsureNative(context.Background(), nil); err != nil {
+		t.Fatal(err)
+	}
+	if !dylibReady() {
+		t.Fatal("expected dylib link")
 	}
 }
 
@@ -70,6 +95,7 @@ func fakeNativeTar(t *testing.T) (string, string) {
 	tw := tar.NewWriter(gz)
 	files := map[string][]byte{
 		"pkg/bin/qwen3-tts-worker":           []byte("#!/bin/sh\n"),
+		"pkg/bin/libqwen3tts.0.1.0.dylib":    []byte("dylib"),
 		"pkg/models/qwen3-tts-0.6b-f16.gguf": []byte("gguf"),
 	}
 	for name, body := range files {
@@ -80,6 +106,15 @@ func fakeNativeTar(t *testing.T) (string, string) {
 		if _, err := tw.Write(body); err != nil {
 			t.Fatal(err)
 		}
+	}
+	link := &tar.Header{
+		Name:     "pkg/bin/libqwen3tts.0.dylib",
+		Mode:     0o755,
+		Typeflag: tar.TypeSymlink,
+		Linkname: "libqwen3tts.0.1.0.dylib",
+	}
+	if err := tw.WriteHeader(link); err != nil {
+		t.Fatal(err)
 	}
 	if err := tw.Close(); err != nil {
 		t.Fatal(err)
