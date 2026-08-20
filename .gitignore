@@ -8,4 +8,7 @@ state/
 *.wav
 !voices/veronica/ref.wav
 !internal/ship/fs/voices/veronica/ref.wav
+tapes/demo.tape
+tapes/demo.offset
+docs/booth-silent.mp4
 .DS_Store

@@ -9,8 +9,12 @@
 <p align="center">Type a line. She speaks it.</p>
 
 <p align="center">
-  <img src="docs/booth.gif" width="680" alt="The cans booth" />
+  <a href="docs/booth.mp4">
+    <img src="docs/booth.gif" width="680" alt="The cans booth" />
+  </a>
 </p>
+
+<p align="center"><a href="docs/booth.mp4">watch with sound</a></p>
 
 ## Install
 
