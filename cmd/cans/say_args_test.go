@@ -16,8 +16,8 @@ func TestParseSayErrors(t *testing.T) {
 	}{
 		{"unknown flag", []string{"--bogus"}, "say: unknown flag --bogus"},
 		{"unknown short flag", []string{"-x", "Put the cans on."}, "say: unknown flag -x"},
-		{"help short", []string{"-h"}, "cans say <text>"},
-		{"help long", []string{"--help"}, "cans say <text>"},
+		{"help short", []string{"-h"}, "cans say [-o out.wav]"},
+		{"help long", []string{"--help"}, "cans say [-o out.wav]"},
 		{"wait unparsable", []string{"--wait", "bogus"}, `say: --wait "bogus" is not a duration`},
 		{"wait zero", []string{"--wait", "0s"}, "say: --wait must be positive"},
 		{"wait negative", []string{"--wait=-2s"}, "say: --wait must be positive"},

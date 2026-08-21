@@ -27,12 +27,15 @@ const usage = `cans — put the cans on.
 Apple Silicon. The mouth is a native Qwen3-TTS worker cloning a wav.
 
   cans                         booth (throat frozen for the session)
-  cans say <text>              speak one line
   cans keep <wav> -text WORDS  freeze this throat (both orders work)
   cans doctor                  set up the mouth, check the machine
   cans version                 print version
 
-exit 75 when another cans holds the mouth and --nowait was set
+  cans say [-o out.wav] [--json] [--play] [--nowait|--wait 30s] <text>
+  echo text | cans say
+  cans say --stream -o 'out/%03d.wav' < lines.txt
+
+exit 75 when another cans holds the mouth and --nowait was set or --wait ran out
 `
 
 func main() {
