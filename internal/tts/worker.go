@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -44,6 +45,10 @@ func StartWorker(ctx context.Context, workerBin, modelDir string) (*Client, erro
 		return nil, err
 	}
 	cmd := exec.CommandContext(ctx, workerBin, modelDir)
+	// D014: cancel terminates the worker rather than SIGKILLing it, and
+	// WaitDelay bounds a worker that ignores SIGTERM or leaves pipes open.
+	cmd.Cancel = func() error { return cmd.Process.Signal(syscall.SIGTERM) }
+	cmd.WaitDelay = 2 * time.Second
 	libDir := filepath.Dir(workerBin)
 	cmd.Env = withLibPath(os.Environ(), libDir)
 	stdin, err := cmd.StdinPipe()

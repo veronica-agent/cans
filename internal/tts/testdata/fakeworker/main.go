@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"io"
 	"math"
 	"os"
 )
@@ -31,10 +32,28 @@ func main() {
 			fmt.Printf("{\"type\":\"error\",\"id\":%q,\"message\":\"missing text\"}\n", req.ID)
 			continue
 		}
+		if req.Text == "fail" {
+			fmt.Printf("{\"type\":\"error\",\"id\":%q,\"message\":\"fail\"}\n", req.ID)
+			continue
+		}
+		if req.Text == "block" {
+			block()
+			return
+		}
 		fmt.Printf("{\"type\":\"pcm_meta\",\"id\":%q,\"sample_rate\":24000,\"format\":\"f32le\",\"n_samples\":1}\n", req.ID)
 		var b [4]byte
 		binary.LittleEndian.PutUint32(b[:], math.Float32bits(0))
 		_, _ = os.Stdout.Write(b[:])
 		fmt.Printf("\n{\"type\":\"final\",\"id\":%q}\n", req.ID)
 	}
+}
+
+// block answers nothing: it reports that synthesis started by creating
+// CANS_FAKE_BLOCK_FILE, then waits in a read until the parent signals it. It
+// stands in for the mouth mid-utterance, which cannot be aborted.
+func block() {
+	if p := os.Getenv("CANS_FAKE_BLOCK_FILE"); p != "" {
+		_ = os.WriteFile(p, []byte("x"), 0o644)
+	}
+	_, _ = io.Copy(io.Discard, os.Stdin)
 }

@@ -17,6 +17,13 @@ import (
 // Run speaks one `cans say` and returns the process exit code.
 // stdout carries data only: ttfa_ms=, a wav path, or a JSON record.
 func Run(ctx context.Context, o Options, stdin io.Reader, stdout, stderr io.Writer) int {
+	if err := checkOut(o.Out, o.Stream); err != nil {
+		fmt.Fprintln(stderr, err)
+		return ExitUsage
+	}
+	if o.Stream {
+		return runStream(ctx, o, stdin, stdout, stderr)
+	}
 	// Usage errors must not fetch the mouth.
 	text, code := resolveText(o, stdin, stderr)
 	if code != ExitOK {
@@ -37,7 +44,7 @@ func runOnce(ctx context.Context, o Options, text string, stdout, stderr io.Writ
 		fmt.Fprintln(stderr, err)
 		return ExitFail
 	}
-	r, err := tts.SayToWith(ctx, text, cur, o.Out, lockOpts(o, stderr))
+	r, err := tts.SayToWith(ctx, text, cur, outPath(o.Out, 0), lockOpts(o, stderr))
 	if err != nil {
 		return exitFor(err, stderr)
 	}
@@ -45,22 +52,26 @@ func runOnce(ctx context.Context, o Options, text string, stdout, stderr io.Writ
 		fmt.Fprintln(stderr, err)
 		return ExitFail
 	}
-	if o.Out == "" {
-		playErr := play.File(r.Wav)
-		tts.RemoveTemp(r.Wav)
-		if playErr != nil {
-			fmt.Fprintln(stderr, playErr)
-			return ExitFail
-		}
-		return ExitOK
-	}
-	if o.Play {
-		if err := play.File(r.Wav); err != nil {
-			fmt.Fprintln(stderr, err)
-			return ExitFail
-		}
+	if err := playTail(o, r.Wav); err != nil {
+		fmt.Fprintln(stderr, err)
+		return ExitFail
 	}
 	return ExitOK
+}
+
+// playTail is the tail every spoken utterance shares. With no -o the wav is a
+// temp file: it is played, then removed whether or not playing worked. With -o
+// the wav is the caller's and is only played on --play.
+func playTail(o Options, wav string) error {
+	if o.Out == "" {
+		err := play.File(wav)
+		tts.RemoveTemp(wav)
+		return err
+	}
+	if o.Play {
+		return play.File(wav)
+	}
+	return nil
 }
 
 // emit writes the one record for an utterance: a JSON line, the wav path, or
@@ -90,6 +101,14 @@ func exitFor(err error, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "say: mouth busy")
 		return ExitBusy
 	}
+	if interrupted(err) {
+		fmt.Fprintln(stderr, "say: interrupted")
+		return ExitInterrupted
+	}
 	fmt.Fprintln(stderr, err)
 	return ExitFail
+}
+
+func interrupted(err error) bool {
+	return errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)
 }

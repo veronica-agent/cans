@@ -117,6 +117,19 @@ func TestRunOnceFakeWorkerWritesOut(t *testing.T) {
 	}
 }
 
+// waitFor polls cond until it holds, failing the test after five seconds. It is
+// a bounded poll, not a sleep: the test never proceeds on hope.
+func waitFor(t *testing.T, cond func() bool, msg string) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for !cond() {
+		if time.Now().After(deadline) {
+			t.Fatal(msg)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
 // failingReader fails the test if the say flow reads stdin it should not.
 type failingReader struct{ t *testing.T }
 
@@ -274,6 +287,72 @@ func TestRunWaitBusyPrintsWaiting(t *testing.T) {
 	if out.Len() != 0 {
 		t.Fatalf("stdout %q", out.String())
 	}
+}
+
+func TestRunInterruptedWaiting(t *testing.T) {
+	fakeWorkerEnv(t)
+	lk, err := mouth.Acquire(context.Background(), mouth.Path(), 0, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer lk.Release()
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+	o := DefaultOptions()
+	o.Text = "Put the cans on."
+	o.Wait = -1
+	var out, errBuf bytes.Buffer
+	code := Run(ctx, o, nil, &out, &errBuf)
+	if code != ExitInterrupted {
+		t.Fatalf("code %d stderr %q", code, errBuf.String())
+	}
+	if !strings.Contains(errBuf.String(), "say: interrupted") {
+		t.Fatalf("stderr %q", errBuf.String())
+	}
+}
+
+// TestRunOnceCancelledMidSynthesis is D014 for one-shot: the worker is held
+// inside synthesis, so cancel lands mid-utterance rather than at the lock.
+func TestRunOnceCancelledMidSynthesis(t *testing.T) {
+	fakeWorkerEnv(t)
+	tmp := t.TempDir()
+	t.Setenv("TMPDIR", tmp)
+	marker := filepath.Join(tmp, "blocked")
+	t.Setenv("CANS_FAKE_BLOCK_FILE", marker)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	o := DefaultOptions()
+	var out, errBuf bytes.Buffer
+
+	done := make(chan int, 1)
+	go func() { done <- runOnce(ctx, o, "block", &out, &errBuf) }()
+	waitFor(t, func() bool {
+		_, err := os.Stat(marker)
+		return err == nil
+	}, "worker never reached synthesis")
+	cancel()
+	code := <-done
+	if code != ExitInterrupted {
+		t.Fatalf("code %d stderr %q", code, errBuf.String())
+	}
+	if !strings.Contains(errBuf.String(), "say: interrupted") {
+		t.Fatalf("stderr %q", errBuf.String())
+	}
+	if out.Len() != 0 {
+		t.Fatalf("stdout %q", out.String())
+	}
+	left, err := filepath.Glob(filepath.Join(tmp, "cans-*.wav"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(left) != 0 {
+		t.Fatalf("temp wavs left: %v", left)
+	}
+	lk, err := mouth.Acquire(context.Background(), mouth.Path(), 0, nil)
+	if err != nil {
+		t.Fatalf("lock after cancel: %v", err)
+	}
+	lk.Release()
 }
 
 func TestRunAfterReleaseSucceeds(t *testing.T) {

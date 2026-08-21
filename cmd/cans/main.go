@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/veronica-agent/cans/internal/booth"
 	"github.com/veronica-agent/cans/internal/doctor"
@@ -43,13 +45,7 @@ func run(args []string) int {
 	}
 	switch args[0] {
 	case "say":
-		o, err := parseSay(args[1:])
-		if err != nil {
-			fmt.Fprintln(stderr, err)
-			return 2
-		}
-		o.StdinTTY = stdinIsTTY()
-		return say.Run(context.Background(), o, stdin, stdout, stderr)
+		return runSay(args[1:])
 	case "doctor":
 		if err := doctor.Run(context.Background(), stdout, stderr); err != nil {
 			return 1
@@ -78,6 +74,26 @@ func run(args []string) int {
 		fmt.Fprint(stderr, usage)
 		return 2
 	}
+}
+
+// runSay speaks one `cans say`, cancellable by SIGINT or SIGTERM.
+func runSay(args []string) int {
+	o, err := parseSay(args)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
+	}
+	o.StdinTTY = stdinIsTTY()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	// D014: the first signal cancels; stop() then restores the default
+	// disposition, so a second Ctrl-C ends the process at once. stop() cancels
+	// ctx as well, so this goroutine always ends with runSay.
+	go func() {
+		<-ctx.Done()
+		stop()
+	}()
+	return say.Run(ctx, o, stdin, stdout, stderr)
 }
 
 // runBooth prepares the mouth and opens the TUI on the frozen throat.

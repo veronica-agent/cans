@@ -94,5 +94,8 @@ func validateSay(o say.Options, sawWait, sawNoWait bool) error {
 	if o.Stdin && o.Text != "" {
 		return fmt.Errorf("say: - and text together")
 	}
+	if o.Stream && o.Text != "" {
+		return fmt.Errorf("say: --stream reads stdin; drop the text")
+	}
 	return nil
 }

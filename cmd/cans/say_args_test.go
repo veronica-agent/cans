@@ -24,6 +24,7 @@ func TestParseSayErrors(t *testing.T) {
 		{"nowait and wait", []string{"--nowait", "--wait", "1s"}, "say: --nowait and --wait together"},
 		{"play without out", []string{"--play", "Put the cans on."}, "say: --play needs -o"},
 		{"stdin with text", []string{"-", "Put the cans on."}, "say: - and text together"},
+		{"stream with text", []string{"--stream", "Put the cans on."}, "say: --stream reads stdin; drop the text"},
 		{"out without value", []string{"-o"}, "say: -o needs a path"},
 		{"wait without value", []string{"--wait"}, "say: --wait needs a duration"},
 	}

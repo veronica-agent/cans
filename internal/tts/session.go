@@ -19,6 +19,9 @@ import (
 type Session struct {
 	c    *Client
 	lock *mouth.Lock
+	// done is the session context's Done channel, kept so Close can tell an
+	// expected terminate-on-cancel (D014) from a real worker failure.
+	done <-chan struct{}
 }
 
 // Options bound how long Open waits for the mouth.
@@ -68,7 +71,7 @@ func startSession(ctx context.Context, lock *mouth.Lock) (*Session, error) {
 	if err != nil {
 		return nil, fmt.Errorf("say: worker: %w", err)
 	}
-	return &Session{c: c, lock: lock}, nil
+	return &Session{c: c, lock: lock, done: ctx.Done()}, nil
 }
 
 // Say clones text using the frozen throat into a temp wav.
@@ -110,7 +113,9 @@ func (s *Session) SayTo(ctx context.Context, text string, cur keep.Current, out 
 	return Result{Wav: out, TTFAMs: ms, SampleRate: rate}, nil
 }
 
-// Close shuts the worker down, then releases the mouth lock.
+// Close shuts the worker down, then releases the mouth lock. After a cancel
+// the worker is signalled rather than asked (D014), so the refused shutdown
+// write and the `signal: terminated` exit are expected, not failures.
 func (s *Session) Close() error {
 	if s == nil {
 		return nil
@@ -120,6 +125,9 @@ func (s *Session) Close() error {
 		err = s.c.Close()
 		s.c = nil
 	}
+	if s.cancelled() {
+		err = nil
+	}
 	if s.lock != nil {
 		rerr := s.lock.Release()
 		s.lock = nil
@@ -128,4 +136,14 @@ func (s *Session) Close() error {
 		}
 	}
 	return err
+}
+
+// cancelled reports whether the context the session was opened with is done.
+func (s *Session) cancelled() bool {
+	select {
+	case <-s.done:
+		return true
+	default:
+		return false
+	}
 }
