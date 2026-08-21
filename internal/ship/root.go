@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 )
 
-// Root is the payload directory: voices/, sidecar/, pyproject.toml.
+// Root is the payload directory: voices/, character.toml.
 //
 // Order: CANS_ROOT, a checkout or brew share/cans next to the binary,
 // then ~/.cans/shipped, then cwd.

@@ -56,15 +56,17 @@ func TestDiagnoseAfterMaterialize(t *testing.T) {
 	}
 }
 
-func TestPrepareSkipsSyncWhenSayBinSet(t *testing.T) {
+func TestPrepareSkipsEnsureWhenSayBinSet(t *testing.T) {
 	t.Setenv("CANS_HOME", t.TempDir())
 	t.Setenv("CANS_ROOT", t.TempDir())
 	t.Setenv("CANS_SAY_BIN", "/bin/true")
 	if err := Prepare(context.Background(), os.Stderr); err != nil {
 		t.Fatal(err)
 	}
-	if ship.VenvReady() {
-		t.Fatal("should not have synced")
+	for _, dir := range []string{ship.Shipped(), ship.Native()} {
+		if _, err := os.Stat(dir); !os.IsNotExist(err) {
+			t.Fatalf("%s should not exist with CANS_SAY_BIN set: %v", dir, err)
+		}
 	}
 }
 

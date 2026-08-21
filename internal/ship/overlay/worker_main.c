@@ -1,6 +1,6 @@
 /* qwen3-tts-worker overlay for the v0.1.0 dylib.
  *
- * Clone defaults: temperature 0.2, max_tokens 360 (mlx sidecar). Optional JSON
+ * Clone defaults: temperature 0.2, max_tokens 360. Optional JSON
  * temperature / max_tokens. Does not call qwen3_tts_speaker_embedding_size
  * (that symbol is not in the v0.1.0 dylib).
  */

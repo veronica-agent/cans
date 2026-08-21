@@ -34,14 +34,14 @@ func sayBin(text string, cur keep.Current) (Result, error) {
 	}
 	line := lastJSONLine(stdout.Bytes())
 	if line == nil {
-		return Result{}, fmt.Errorf("say: sidecar printed no json (%q)", stdout.String())
+		return Result{}, fmt.Errorf("say: say bin printed no json (%q)", stdout.String())
 	}
 	var r Result
 	if err := json.Unmarshal(line, &r); err != nil {
-		return Result{}, fmt.Errorf("say: bad sidecar json: %w (%q)", err, stdout.String())
+		return Result{}, fmt.Errorf("say: bad say bin json: %w (%q)", err, stdout.String())
 	}
 	if r.Wav == "" {
-		return Result{}, fmt.Errorf("say: sidecar returned no wav")
+		return Result{}, fmt.Errorf("say: say bin returned no wav")
 	}
 	if err := audio.HeaderOK(r.Wav); err != nil {
 		return Result{}, fmt.Errorf("say: %w", err)

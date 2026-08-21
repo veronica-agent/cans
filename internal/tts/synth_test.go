@@ -73,7 +73,7 @@ func TestSayEmpty(t *testing.T) {
 }
 
 func TestRemoveTempOnlyUnderTmp(t *testing.T) {
-	tmp := filepath.Join(t.TempDir(), "sidecar.wav")
+	tmp := filepath.Join(t.TempDir(), "say.wav")
 	if err := os.WriteFile(tmp, audio.Minimal(), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -135,7 +135,7 @@ func TestSayRejectsNonWAV(t *testing.T) {
 	}
 }
 
-func TestSayMockSidecar(t *testing.T) {
+func TestSayMockBin(t *testing.T) {
 	home := t.TempDir()
 	root := t.TempDir()
 	t.Setenv("CANS_HOME", home)

@@ -57,8 +57,6 @@ homebrew_casks:
     directory: Casks
     homepage: https://github.com/veronica-agent/cans
     description: Type a line. She speaks it.
-    dependencies:
-      - formula: uv
     custom_block: |
       depends_on macos: ">= :ventura"
       depends_on arch: :arm64
