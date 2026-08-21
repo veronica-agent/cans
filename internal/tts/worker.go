@@ -95,11 +95,7 @@ func (c *Client) synthesize(ctx context.Context, id, text, refWAV string) (*pcmR
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	req := map[string]string{"type": "synthesize", "id": id, "text": text}
-	if refWAV != "" {
-		req["ref_wav"] = refWAV
-	}
-	b, err := json.Marshal(req)
+	b, err := json.Marshal(synthRequest(id, text, refWAV))
 	if err != nil {
 		return nil, err
 	}
@@ -108,6 +104,42 @@ func (c *Client) synthesize(ctx context.Context, id, text, refWAV string) (*pcmR
 		return nil, err
 	}
 	return c.readPCM(ctx, start)
+}
+
+const cloneTemperature = 0.2
+
+func synthRequest(id, text, refWAV string) map[string]any {
+	req := map[string]any{
+		"type":        "synthesize",
+		"id":          id,
+		"text":        text,
+		"temperature": cloneTemperature,
+		"max_tokens":  tokenBudget(text),
+	}
+	if refWAV != "" {
+		req["ref_wav"] = refWAV
+	}
+	return req
+}
+
+func tokenBudget(text string) int {
+	n := 0
+	for _, w := range strings.Fields(text) {
+		if w != "" {
+			n++
+		}
+	}
+	if n < 1 {
+		n = 1
+	}
+	tokens := int(50 * (0.55*float64(n) + 2.2))
+	if tokens < 180 {
+		tokens = 180
+	}
+	if tokens > 360 {
+		tokens = 360
+	}
+	return tokens
 }
 
 func (c *Client) Close() error {

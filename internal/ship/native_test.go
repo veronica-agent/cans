@@ -12,6 +12,41 @@ import (
 	"testing"
 )
 
+func TestApplyWorkerOverlaySkippedWhenCustomURL(t *testing.T) {
+	t.Setenv("CANS_HOME", t.TempDir())
+	t.Setenv("CANS_WORKER_BIN", "")
+	t.Setenv("CANS_NATIVE_URL", "file:///tmp/x")
+	if err := applyWorkerOverlay(); err != nil {
+		t.Fatal(err)
+	}
+	if NativeReady() {
+		t.Fatal("custom URL must not overlay")
+	}
+}
+
+func TestApplyWorkerOverlayWrites(t *testing.T) {
+	if len(workerOverlay) == 0 {
+		t.Skip("no overlay on this GOOS/GOARCH")
+	}
+	home := t.TempDir()
+	t.Setenv("CANS_HOME", home)
+	t.Setenv("CANS_WORKER_BIN", "")
+	t.Setenv("CANS_NATIVE_URL", "")
+	if err := applyWorkerOverlay(); err != nil {
+		t.Fatal(err)
+	}
+	got, err := os.ReadFile(WorkerBin())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(got, workerOverlay) {
+		t.Fatalf("overlay mismatch %d vs %d", len(got), len(workerOverlay))
+	}
+	if err := applyWorkerOverlay(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestNativeReadyFalse(t *testing.T) {
 	t.Setenv("CANS_HOME", t.TempDir())
 	t.Setenv("CANS_WORKER_BIN", "")
