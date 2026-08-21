@@ -1,10 +1,6 @@
 package main
 
-import (
-	"os"
-	"syscall"
-	"unsafe"
-)
+import "os"
 
 // stdinIsTTY is true only for a real terminal. /dev/null is a char device
 // (Stat ModeCharDevice is set) but not a TTY; treating it as one made
@@ -15,10 +11,4 @@ func stdinIsTTY() bool {
 		return false
 	}
 	return fdIsTTY(f.Fd())
-}
-
-func fdIsTTY(fd uintptr) bool {
-	var t syscall.Termios
-	_, _, errno := syscall.Syscall6(syscall.SYS_IOCTL, fd, uintptr(syscall.TIOCGETA), uintptr(unsafe.Pointer(&t)), 0, 0, 0)
-	return errno == 0
 }
