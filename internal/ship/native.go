@@ -34,38 +34,37 @@ func EnsureNative(ctx context.Context, log io.Writer) error {
 		return nil
 	}
 	fixDylibNames(filepath.Join(Native(), "bin"))
-	if NativeReady() && dylibReady() {
-		return nil
-	}
-	url := os.Getenv("CANS_NATIVE_URL")
-	sha := os.Getenv("CANS_NATIVE_SHA256")
-	if url == "" {
-		if runtime.GOOS != "darwin" || runtime.GOARCH != "arm64" {
-			return fmt.Errorf("native mouth: Apple Silicon macOS only")
+	if !(NativeReady() && dylibReady()) {
+		url := os.Getenv("CANS_NATIVE_URL")
+		sha := os.Getenv("CANS_NATIVE_SHA256")
+		if url == "" {
+			if runtime.GOOS != "darwin" || runtime.GOARCH != "arm64" {
+				return fmt.Errorf("native mouth: Apple Silicon macOS only")
+			}
+			url = nativeURL
+			sha = nativeSHA
 		}
-		url = nativeURL
-		sha = nativeSHA
+		if log == nil {
+			log = io.Discard
+		}
+		fmt.Fprintln(log, "fetching native mouth (~1.6 GB, once)…")
+		root := Native()
+		if err := os.MkdirAll(root, 0o755); err != nil {
+			return err
+		}
+		tmp, err := downloadArchive(ctx, root, url, sha)
+		if err != nil {
+			return fmt.Errorf("native mouth: %w", err)
+		}
+		defer os.Remove(tmp)
+		if err := extractTarGz(tmp, root); err != nil {
+			return fmt.Errorf("native mouth: %w", err)
+		}
+		if !NativeReady() {
+			return fmt.Errorf("native mouth: unpack did not produce %s", WorkerBin())
+		}
+		_ = os.Chmod(WorkerBin(), 0o755)
+		fixDylibNames(filepath.Join(Native(), "bin"))
 	}
-	if log == nil {
-		log = io.Discard
-	}
-	fmt.Fprintln(log, "fetching native mouth (~1.6 GB, once)…")
-	root := Native()
-	if err := os.MkdirAll(root, 0o755); err != nil {
-		return err
-	}
-	tmp, err := downloadArchive(ctx, root, url, sha)
-	if err != nil {
-		return fmt.Errorf("native mouth: %w", err)
-	}
-	defer os.Remove(tmp)
-	if err := extractTarGz(tmp, root); err != nil {
-		return fmt.Errorf("native mouth: %w", err)
-	}
-	if !NativeReady() {
-		return fmt.Errorf("native mouth: unpack did not produce %s", WorkerBin())
-	}
-	_ = os.Chmod(WorkerBin(), 0o755)
-	fixDylibNames(filepath.Join(Native(), "bin"))
-	return nil
+	return applyWorkerOverlay()
 }

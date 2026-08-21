@@ -56,6 +56,7 @@ func (s *Session) Say(ctx context.Context, text string, cur keep.Current) (Resul
 	if rate <= 0 {
 		rate = 24000
 	}
+	pcm.samples = audio.Clean(pcm.samples, rate)
 	if err := audio.WritePCM16(out, rate, pcm.samples); err != nil {
 		return Result{}, err
 	}
