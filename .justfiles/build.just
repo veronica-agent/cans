@@ -30,6 +30,8 @@ install:
 uninstall *args:
     #!/usr/bin/env bash
     set -euo pipefail
+    # Shebang recipes do not get *args on $@ unless they are interpolated.
+    set -- {{ args }}
     all=0
     for a in "$@"; do
         case "$a" in
