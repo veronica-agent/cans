@@ -26,10 +26,18 @@ install:
     fi
     echo "installed ${dest}/cans"
 
-# Remove every cans install: go/brew bins, ./bin, and ~/.cans.
-uninstall:
+# Remove go/brew/./bin cans. `just uninstall --all` also wipes ~/.cans (native mouth).
+uninstall *args:
     #!/usr/bin/env bash
     set -euo pipefail
+    # Shebang recipes do not get *args on $@ unless they are interpolated.
+    set -- {{ args }}
+    all=0
+    for a in "$@"; do
+        case "$a" in
+            --all|all) all=1 ;;
+        esac
+    done
     dest="$(go env GOBIN)"
     if [ -z "$dest" ]; then
         dest="$(go env GOPATH)/bin"
@@ -44,13 +52,17 @@ uninstall:
         brew uninstall --formula --force cans
     fi
     home="${CANS_HOME:-$HOME/.cans}"
-    if [ -e "$home" ]; then
-        rm -rf "$home"
-        echo "removed ${home}"
+    if [ "$all" -eq 1 ]; then
+        if [ -e "$home" ]; then
+            rm -rf "$home"
+            echo "removed ${home}"
+        fi
+    else
+        echo "left ${home} (native mouth). wipe it with: just uninstall --all"
     fi
 
 uninstall-home:
-    just uninstall
+    just uninstall --all
 
 # Rebuild the quiet worker overlay against the installed v0.1.0 dylib.
 overlay-worker:
