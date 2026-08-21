@@ -2,6 +2,7 @@ package tts
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -11,6 +12,59 @@ import (
 	"github.com/veronica-agent/cans/internal/audio"
 	"github.com/veronica-agent/cans/internal/keep"
 )
+
+func TestTokenBudget(t *testing.T) {
+	if tokenBudget("") != 180 {
+		t.Fatalf("empty: %d", tokenBudget(""))
+	}
+	if tokenBudget("hi") != 180 {
+		t.Fatalf("short: %d", tokenBudget("hi"))
+	}
+	long := strings.Repeat("word ", 80)
+	if tokenBudget(long) != 360 {
+		t.Fatalf("long: %d", tokenBudget(long))
+	}
+}
+
+func TestSynthRequestCloneParams(t *testing.T) {
+	b, err := json.Marshal(synthRequest("cans", "Put the cans on.", "/tmp/ref.wav"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got map[string]any
+	if err := json.Unmarshal(b, &got); err != nil {
+		t.Fatal(err)
+	}
+	if got["temperature"] != 0.2 {
+		t.Fatalf("temperature %v", got["temperature"])
+	}
+	if _, ok := got["max_tokens"].(float64); !ok {
+		t.Fatalf("max_tokens %T %v", got["max_tokens"], got["max_tokens"])
+	}
+	if got["ref_wav"] != "/tmp/ref.wav" {
+		t.Fatalf("ref %v", got["ref_wav"])
+	}
+}
+
+func TestDumpLiveWav(t *testing.T) {
+	dst := os.Getenv("CANS_DUMP_WAV")
+	if dst == "" {
+		t.Skip("CANS_DUMP_WAV")
+	}
+	r, err := Say(context.Background(), "Put the cans on.")
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := os.ReadFile(r.Wav)
+	if err != nil {
+		t.Fatal(err)
+	}
+	RemoveTemp(r.Wav)
+	if err := os.WriteFile(dst, b, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("ttfa_ms=%d wav=%s bytes=%d", r.TTFAMs, dst, len(b))
+}
 
 func TestSayEmpty(t *testing.T) {
 	if _, err := Say(context.Background(), "  "); err == nil {

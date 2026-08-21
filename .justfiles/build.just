@@ -63,3 +63,17 @@ uninstall *args:
 
 uninstall-home:
     just uninstall --all
+
+# Rebuild the quiet worker overlay against the installed v0.1.0 dylib.
+overlay-worker:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    root="$(git rev-parse --show-toplevel)"
+    lib="${CANS_HOME:-$HOME/.cans}/native/bin"
+    src="$root/internal/ship/overlay"
+    out="$src/qwen3-tts-worker-darwin-arm64"
+    cc -O2 -Wall -Wextra -I"$src" -L"$lib" -Wl,-rpath,@loader_path \
+      -o "$out" "$src/worker_main.c" -lqwen3tts -lm -lpthread
+    install_name_tool -add_rpath @loader_path "$out" 2>/dev/null || true
+    strip "$out"
+    echo "wrote $out"
