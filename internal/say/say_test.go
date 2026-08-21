@@ -10,7 +10,10 @@ import (
 	"strings"
 	"testing"
 
+	"time"
+
 	"github.com/veronica-agent/cans/internal/audio"
+	"github.com/veronica-agent/cans/internal/mouth"
 	"github.com/veronica-agent/cans/internal/tts"
 )
 
@@ -219,6 +222,97 @@ func TestRunJSONRecord(t *testing.T) {
 	}
 	if r.TTFAMs != 12 || r.SampleRate != 24000 {
 		t.Fatalf("record %+v", r)
+	}
+}
+
+func TestRunNowaitBusy(t *testing.T) {
+	fakeWorkerEnv(t)
+	lk, err := mouth.Acquire(context.Background(), mouth.Path(), 0, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer lk.Release()
+	o := DefaultOptions()
+	o.Text = "Put the cans on."
+	o.Wait = 0
+	var out, errBuf bytes.Buffer
+	if code := Run(context.Background(), o, nil, &out, &errBuf); code != ExitBusy {
+		t.Fatalf("code %d stderr %q, want %d", code, errBuf.String(), ExitBusy)
+	}
+	if !strings.Contains(errBuf.String(), "mouth busy") {
+		t.Fatalf("stderr %q", errBuf.String())
+	}
+	if strings.Contains(errBuf.String(), "waiting for the mouth") {
+		t.Fatalf("nowait waited: %q", errBuf.String())
+	}
+	if out.Len() != 0 {
+		t.Fatalf("stdout %q", out.String())
+	}
+}
+
+func TestRunWaitBusyPrintsWaiting(t *testing.T) {
+	fakeWorkerEnv(t)
+	lk, err := mouth.Acquire(context.Background(), mouth.Path(), 0, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer lk.Release()
+	o := DefaultOptions()
+	o.Text = "Put the cans on."
+	o.Wait = 200 * time.Millisecond
+	var out, errBuf bytes.Buffer
+	start := time.Now()
+	if code := Run(context.Background(), o, nil, &out, &errBuf); code != ExitBusy {
+		t.Fatalf("code %d stderr %q", code, errBuf.String())
+	}
+	if elapsed := time.Since(start); elapsed < 200*time.Millisecond {
+		t.Fatalf("elapsed %v", elapsed)
+	}
+	if n := strings.Count(errBuf.String(), "waiting for the mouth…"); n != 1 {
+		t.Fatalf("waiting lines %d in %q", n, errBuf.String())
+	}
+	if out.Len() != 0 {
+		t.Fatalf("stdout %q", out.String())
+	}
+}
+
+func TestRunAfterReleaseSucceeds(t *testing.T) {
+	fakeWorkerEnv(t)
+	lk, err := mouth.Acquire(context.Background(), mouth.Path(), 0, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := lk.Release(); err != nil {
+		t.Fatal(err)
+	}
+	o := DefaultOptions()
+	o.Text = "Put the cans on."
+	o.Wait = 0
+	var out, errBuf bytes.Buffer
+	if code := Run(context.Background(), o, nil, &out, &errBuf); code != ExitOK {
+		t.Fatalf("code %d stderr %q", code, errBuf.String())
+	}
+}
+
+func fakeWorkerEnv(t *testing.T) {
+	t.Helper()
+	bin := buildFakeWorker(t)
+	home := t.TempDir()
+	root := t.TempDir()
+	t.Setenv("CANS_HOME", home)
+	t.Setenv("CANS_ROOT", root)
+	t.Setenv("CANS_NOPLAY", "1")
+	t.Setenv("CANS_SAY_BIN", "")
+	t.Setenv("CANS_WORKER_BIN", bin)
+	t.Setenv("CANS_WORKER_MODELS", t.TempDir())
+	t.Setenv("CANS_NATIVE_URL", "http://127.0.0.1/cans-test")
+	writeRef(t, root)
+	if err := os.WriteFile(filepath.Join(root, "character.toml"), []byte("name = \"veronica\"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	dylib := filepath.Join(filepath.Dir(bin), "libqwen3tts.0.dylib")
+	if err := os.WriteFile(dylib, []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
 	}
 }
 

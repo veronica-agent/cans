@@ -29,6 +29,8 @@ Apple Silicon. The mouth is a native Qwen3-TTS worker cloning a wav.
   cans keep <wav> -text WORDS  freeze this throat (both orders work)
   cans doctor                  set up the mouth, check the machine
   cans version                 print version
+
+exit 75 when another cans holds the mouth and --nowait was set
 `
 
 func main() {

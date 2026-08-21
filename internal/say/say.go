@@ -3,11 +3,13 @@ package say
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 
 	"github.com/veronica-agent/cans/internal/doctor"
 	"github.com/veronica-agent/cans/internal/keep"
+	"github.com/veronica-agent/cans/internal/mouth"
 	"github.com/veronica-agent/cans/internal/play"
 	"github.com/veronica-agent/cans/internal/tts"
 )
@@ -35,10 +37,9 @@ func runOnce(ctx context.Context, o Options, text string, stdout, stderr io.Writ
 		fmt.Fprintln(stderr, err)
 		return ExitFail
 	}
-	r, err := tts.SayTo(ctx, text, cur, o.Out)
+	r, err := tts.SayToWith(ctx, text, cur, o.Out, lockOpts(o, stderr))
 	if err != nil {
-		fmt.Fprintln(stderr, err)
-		return ExitFail
+		return exitFor(err, stderr)
 	}
 	if err := emit(stdout, o, r); err != nil {
 		fmt.Fprintln(stderr, err)
@@ -75,4 +76,20 @@ func emit(stdout io.Writer, o Options, r tts.Result) error {
 		_, err := fmt.Fprintf(stdout, "ttfa_ms=%d\n", r.TTFAMs)
 		return err
 	}
+}
+
+func lockOpts(o Options, stderr io.Writer) tts.Options {
+	return tts.Options{
+		Wait:   o.Wait,
+		OnWait: func() { fmt.Fprintln(stderr, "waiting for the mouth…") },
+	}
+}
+
+func exitFor(err error, stderr io.Writer) int {
+	if errors.Is(err, mouth.ErrBusy) {
+		fmt.Fprintln(stderr, "say: mouth busy")
+		return ExitBusy
+	}
+	fmt.Fprintln(stderr, err)
+	return ExitFail
 }

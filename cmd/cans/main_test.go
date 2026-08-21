@@ -2,12 +2,15 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/veronica-agent/cans/internal/audio"
+	"github.com/veronica-agent/cans/internal/mouth"
 )
 
 func TestParseKeepBothOrders(t *testing.T) {
@@ -138,5 +141,60 @@ func TestSayUnknownFlag(t *testing.T) {
 	}
 	if !strings.Contains(buf.String(), "--bogus") {
 		t.Fatalf("%q", buf.String())
+	}
+}
+
+func TestSayNowaitBusy(t *testing.T) {
+	setupFakeMouth(t)
+	lk, err := mouth.Acquire(context.Background(), mouth.Path(), 0, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer lk.Release()
+	var buf bytes.Buffer
+	old := stderr
+	stderr = &buf
+	defer func() { stderr = old }()
+	if code := run([]string{"say", "--nowait", "Put the cans on."}); code != 75 {
+		t.Fatalf("code %d stderr %q", code, buf.String())
+	}
+	if !strings.Contains(buf.String(), "mouth busy") {
+		t.Fatalf("%q", buf.String())
+	}
+}
+
+func setupFakeMouth(t *testing.T) {
+	t.Helper()
+	dir, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	src := filepath.Join(dir, "..", "..", "internal", "tts", "testdata", "fakeworker")
+	bin := filepath.Join(t.TempDir(), "fake-worker")
+	out, err := exec.Command("go", "build", "-o", bin, src).CombinedOutput()
+	if err != nil {
+		t.Fatalf("build fake worker: %s\n%s", err, out)
+	}
+	home := t.TempDir()
+	root := t.TempDir()
+	t.Setenv("CANS_HOME", home)
+	t.Setenv("CANS_ROOT", root)
+	t.Setenv("CANS_NOPLAY", "1")
+	t.Setenv("CANS_SAY_BIN", "")
+	t.Setenv("CANS_WORKER_BIN", bin)
+	t.Setenv("CANS_WORKER_MODELS", t.TempDir())
+	t.Setenv("CANS_NATIVE_URL", "http://127.0.0.1/cans-test")
+	ref := filepath.Join(root, "voices", "veronica", "ref.wav")
+	if err := os.MkdirAll(filepath.Dir(ref), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(ref, audio.Minimal(), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "character.toml"), []byte("name = \"veronica\"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(filepath.Dir(bin), "libqwen3tts.0.dylib"), []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
 	}
 }

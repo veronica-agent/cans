@@ -10,19 +10,55 @@ import (
 
 	"github.com/veronica-agent/cans/internal/audio"
 	"github.com/veronica-agent/cans/internal/keep"
+	"github.com/veronica-agent/cans/internal/mouth"
 	"github.com/veronica-agent/cans/internal/ship"
 )
 
-// Session is a warm worker for one booth (or one say).
+// Session is a warm worker for one booth (or one say). The mouth lock lives
+// as long as the session does.
 type Session struct {
-	c *Client
+	c    *Client
+	lock *mouth.Lock
 }
 
-// Open starts the native worker.
+// Options bound how long Open waits for the mouth.
+type Options struct {
+	Wait   time.Duration
+	OnWait func()
+}
+
+// DefaultOptions wait forever and print a stderr line while blocked.
+func DefaultOptions() Options {
+	return Options{Wait: -1, OnWait: defaultOnWait}
+}
+
+func defaultOnWait() {
+	fmt.Fprintln(os.Stderr, "waiting for the mouth…")
+}
+
+// Open starts the native worker, waiting forever for the mouth if needed.
 func Open(ctx context.Context) (*Session, error) {
+	return OpenWith(ctx, DefaultOptions())
+}
+
+// OpenWith acquires the mouth lock, then starts the worker.
+func OpenWith(ctx context.Context, o Options) (*Session, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
+	lk, err := mouth.Acquire(ctx, mouth.Path(), o.Wait, o.OnWait)
+	if err != nil {
+		return nil, err
+	}
+	sess, err := startSession(ctx, lk)
+	if err != nil {
+		_ = lk.Release()
+		return nil, err
+	}
+	return sess, nil
+}
+
+func startSession(ctx context.Context, lock *mouth.Lock) (*Session, error) {
 	bin := ship.WorkerBin()
 	models := ship.WorkerModels()
 	if _, err := os.Stat(bin); err != nil {
@@ -32,7 +68,7 @@ func Open(ctx context.Context) (*Session, error) {
 	if err != nil {
 		return nil, fmt.Errorf("say: worker: %w", err)
 	}
-	return &Session{c: c}, nil
+	return &Session{c: c, lock: lock}, nil
 }
 
 // Say clones text using the frozen throat into a temp wav.
@@ -74,10 +110,22 @@ func (s *Session) SayTo(ctx context.Context, text string, cur keep.Current, out 
 	return Result{Wav: out, TTFAMs: ms, SampleRate: rate}, nil
 }
 
-// Close shuts the worker down.
+// Close shuts the worker down, then releases the mouth lock.
 func (s *Session) Close() error {
-	if s == nil || s.c == nil {
+	if s == nil {
 		return nil
 	}
-	return s.c.Close()
+	var err error
+	if s.c != nil {
+		err = s.c.Close()
+		s.c = nil
+	}
+	if s.lock != nil {
+		rerr := s.lock.Release()
+		s.lock = nil
+		if err == nil {
+			err = rerr
+		}
+	}
+	return err
 }
