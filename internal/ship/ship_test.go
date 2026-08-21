@@ -2,16 +2,42 @@ package ship
 
 import (
 	"bytes"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"testing"
 
 	"github.com/veronica-agent/cans/internal/audio"
 )
 
+// payload is every file the embed ships, relative to the checkout root.
+var payload = []string{
+	"character.toml",
+	"voices/veronica/meta.json",
+	"voices/veronica/ref.wav",
+}
+
 func TestCompleteFalseOnEmpty(t *testing.T) {
 	if Complete("") || Complete(t.TempDir()) {
 		t.Fatal("expected incomplete")
+	}
+}
+
+func TestCompleteNeedsEveryPiece(t *testing.T) {
+	for _, missing := range []string{"character.toml", "voices/veronica/ref.wav"} {
+		t.Run(missing, func(t *testing.T) {
+			dest := t.TempDir()
+			if err := Materialize(dest); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Remove(filepath.Join(dest, filepath.FromSlash(missing))); err != nil {
+				t.Fatal(err)
+			}
+			if Complete(dest) {
+				t.Fatalf("complete without %s", missing)
+			}
+		})
 	}
 }
 
@@ -26,12 +52,12 @@ func TestMaterializeThenComplete(t *testing.T) {
 	if err := audio.HeaderOK(DefaultWav(dest)); err != nil {
 		t.Fatal(err)
 	}
-	py, err := os.ReadFile(Sidecar(dest))
+	char, err := os.ReadFile(filepath.Join(dest, "character.toml"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !bytes.Contains(py, []byte("Qwen3-TTS")) {
-		t.Fatalf("sidecar missing clone model: %s", py[:min(80, len(py))])
+	if !bytes.Contains(char, []byte(`name = "Veronica"`)) {
+		t.Fatalf("character.toml missing name: %s", char)
 	}
 }
 
@@ -63,8 +89,8 @@ func TestEnsureRefreshesStaleShipped(t *testing.T) {
 	if err := Ensure(); err != nil {
 		t.Fatal(err)
 	}
-	sidecar := Sidecar(Shipped())
-	if err := os.WriteFile(sidecar, []byte("stale"), 0o644); err != nil {
+	char := filepath.Join(Shipped(), "character.toml")
+	if err := os.WriteFile(char, []byte("stale"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(Shipped(), stampFile), []byte("old\n"), 0o644); err != nil {
@@ -73,7 +99,7 @@ func TestEnsureRefreshesStaleShipped(t *testing.T) {
 	if err := Ensure(); err != nil {
 		t.Fatal(err)
 	}
-	got, err := os.ReadFile(sidecar)
+	got, err := os.ReadFile(char)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,24 +135,37 @@ func TestRootHonorsCANS_ROOT(t *testing.T) {
 	}
 }
 
-func TestEnvOverridesHFAndVenv(t *testing.T) {
-	t.Setenv("CANS_HOME", t.TempDir())
-	got := Env([]string{"PATH=/bin", "HF_HOME=/nope", "UV_PROJECT_ENVIRONMENT=/nope"})
-	wantHF := "HF_HOME=" + HFHome()
-	wantUV := "UV_PROJECT_ENVIRONMENT=" + Venv()
-	var sawHF, sawUV, sawOld bool
-	for _, e := range got {
-		switch e {
-		case wantHF:
-			sawHF = true
-		case wantUV:
-			sawUV = true
-		case "HF_HOME=/nope", "UV_PROJECT_ENVIRONMENT=/nope":
-			sawOld = true
+// TestEmbedIsExactlyPayload fails if anything sneaks into internal/ship/fs
+// that is not on the payload list — the Python sidecar must not come back.
+func TestEmbedIsExactlyPayload(t *testing.T) {
+	var got []string
+	err := fs.WalkDir(bundled, embedRoot, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
 		}
+		if d.IsDir() {
+			return nil
+		}
+		rel, err := filepath.Rel(embedRoot, path)
+		if err != nil {
+			return err
+		}
+		got = append(got, filepath.ToSlash(rel))
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
-	if !sawHF || !sawUV || sawOld {
-		t.Fatalf("%v", got)
+	sort.Strings(got)
+	want := append([]string(nil), payload...)
+	sort.Strings(want)
+	if len(got) != len(want) {
+		t.Fatalf("embed has %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("embed has %v, want %v", got, want)
+		}
 	}
 }
 
@@ -135,19 +174,11 @@ func TestEmbedMatchesCheckout(t *testing.T) {
 	if !ok {
 		t.Skip("not in a checkout")
 	}
-	pairs := []string{
-		"character.toml",
-		"pyproject.toml",
-		"uv.lock",
-		"sidecar/say.py",
-		"voices/veronica/ref.wav",
-		"voices/veronica/meta.json",
-	}
 	dest := t.TempDir()
 	if err := Materialize(dest); err != nil {
 		t.Fatal(err)
 	}
-	for _, rel := range pairs {
+	for _, rel := range payload {
 		want, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(rel)))
 		if err != nil {
 			t.Fatal(err)
@@ -162,6 +193,8 @@ func TestEmbedMatchesCheckout(t *testing.T) {
 	}
 }
 
+// checkoutRoot walks up to the directory holding go.mod and character.toml.
+// A CANS_ROOT payload never has go.mod, so the pair is unambiguous.
 func checkoutRoot() (string, bool) {
 	wd, err := os.Getwd()
 	if err != nil {
@@ -170,7 +203,7 @@ func checkoutRoot() (string, bool) {
 	dir := wd
 	for i := 0; i < 8; i++ {
 		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
-			if _, err := os.Stat(filepath.Join(dir, "sidecar", "say.py")); err == nil {
+			if _, err := os.Stat(filepath.Join(dir, "character.toml")); err == nil {
 				return dir, true
 			}
 		}

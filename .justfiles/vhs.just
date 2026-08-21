@@ -33,26 +33,32 @@ booth:
     just vhs record tapes/booth.tape
 
 # Real mouth + VHS terminal, muxed to docs/booth.mp4 (gif stays silent).
+# The line is baked with qwen3-tts-cli, the one-shot tool that ships next to
+# the worker (cans doctor puts both in ~/.cans/native/bin).
 demo:
     #!/usr/bin/env bash
     set -euo pipefail
     just vhs doctor
-    command -v uv >/dev/null 2>&1 || { echo "vhs demo: need uv" >&2; exit 1; }
     just build quick
     repo_root="$(git rev-parse --show-toplevel)"
     cd "$repo_root"
     chmod +x tapes/demo-say
 
+    cans_home="${CANS_HOME:-$HOME/.cans}"
+    worker="${CANS_WORKER_BIN:-$cans_home/native/bin/qwen3-tts-worker}"
+    models="${CANS_WORKER_MODELS:-$cans_home/native/models}"
+    cli="$(dirname "$worker")/qwen3-tts-cli"
+    [[ -x "$cli" ]] || { echo "vhs demo: $cli missing — run cans doctor" >&2; exit 1; }
+
     line="Put the cans on."
     wav="$repo_root/tapes/booth-line.wav"
-    export UV_PROJECT_ENVIRONMENT="${CANS_VENV:-$HOME/.cans/venv}"
     echo "baking \"$line\"…"
+    bake_log="$(mktemp -t cans-bake)"
+    "$cli" -m "$models" -t "$line" -r "$repo_root/voices/veronica/ref.wav" -o "$wav" >/dev/null 2>"$bake_log"
+    ms="$(sed -n 's/^ *Total: *\([0-9][0-9]*\) ms.*/\1/p' "$bake_log" | tail -n 1)"
+    rm -f "$bake_log"
     say_out="$(mktemp -t cans-say)"
-    uv run --project "$repo_root" --locked python sidecar/say.py \
-        --text "$line" \
-        --ref "$repo_root/voices/veronica/ref.wav" \
-        --ref-text "Just like that, feel the rhythm of my voice." \
-        --out "$wav" | tee "$say_out"
+    printf '{"wav":"%s","ttfa_ms":%s,"sample_rate":24000}\n' "$wav" "${ms:-240}" | tee "$say_out"
 
     silent="$repo_root/docs/booth-silent.mp4"
     tape="$repo_root/tapes/demo.tape"

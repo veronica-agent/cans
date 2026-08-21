@@ -1,6 +1,5 @@
 /bin/
 /dist/
-.venv/
 __pycache__/
 *.pyc
 state/

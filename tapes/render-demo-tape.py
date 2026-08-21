@@ -20,7 +20,7 @@ def last_json(path: pathlib.Path) -> dict:
         if isinstance(obj, dict) and obj.get("wav"):
             last = obj
     if last is None:
-        sys.exit("sidecar printed no json")
+        sys.exit("bake printed no json")
     return last
 
 
