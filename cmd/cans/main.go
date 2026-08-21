@@ -10,12 +10,12 @@ import (
 	"github.com/veronica-agent/cans/internal/booth"
 	"github.com/veronica-agent/cans/internal/doctor"
 	"github.com/veronica-agent/cans/internal/keep"
-	"github.com/veronica-agent/cans/internal/play"
+	"github.com/veronica-agent/cans/internal/say"
 	"github.com/veronica-agent/cans/internal/ship"
-	"github.com/veronica-agent/cans/internal/tts"
 )
 
 var (
+	stdin  io.Reader = os.Stdin
 	stdout io.Writer = os.Stdout
 	stderr io.Writer = os.Stderr
 )
@@ -37,45 +37,17 @@ func main() {
 
 func run(args []string) int {
 	if len(args) == 0 {
-		if err := doctor.Prepare(context.Background(), stderr); err != nil {
-			fmt.Fprintln(stderr, err)
-			return 1
-		}
-		throat, err := keep.Load()
-		if err != nil {
-			fmt.Fprintln(stderr, err)
-			return 1
-		}
-		if err := booth.Run(context.Background(), keep.Quote(), throat); err != nil {
-			fmt.Fprintln(stderr, err)
-			return 1
-		}
-		return 0
+		return runBooth()
 	}
 	switch args[0] {
 	case "say":
-		text := strings.TrimSpace(strings.Join(args[1:], " "))
-		if text == "" {
-			fmt.Fprintln(stderr, "say: missing text")
-			return 2
-		}
-		if err := doctor.Prepare(context.Background(), stderr); err != nil {
-			fmt.Fprintln(stderr, err)
-			return 1
-		}
-		r, err := tts.Say(context.Background(), text)
+		o, err := parseSay(args[1:])
 		if err != nil {
 			fmt.Fprintln(stderr, err)
-			return 1
+			return 2
 		}
-		fmt.Fprintf(stdout, "ttfa_ms=%d\n", r.TTFAMs)
-		playErr := play.File(r.Wav)
-		tts.RemoveTemp(r.Wav)
-		if playErr != nil {
-			fmt.Fprintln(stderr, playErr)
-			return 1
-		}
-		return 0
+		o.StdinTTY = stdinIsTTY()
+		return say.Run(context.Background(), o, stdin, stdout, stderr)
 	case "doctor":
 		if err := doctor.Run(context.Background(), stdout, stderr); err != nil {
 			return 1
@@ -104,6 +76,24 @@ func run(args []string) int {
 		fmt.Fprint(stderr, usage)
 		return 2
 	}
+}
+
+// runBooth prepares the mouth and opens the TUI on the frozen throat.
+func runBooth() int {
+	if err := doctor.Prepare(context.Background(), stderr); err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	throat, err := keep.Load()
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	if err := booth.Run(context.Background(), keep.Quote(), throat); err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	return 0
 }
 
 // parseKeep accepts both `keep take.wav -text words` and `keep -text words take.wav`.

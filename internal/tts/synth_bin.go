@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/veronica-agent/cans/internal/audio"
@@ -59,4 +61,43 @@ func lastJSONLine(raw []byte) []byte {
 		}
 	}
 	return last
+}
+
+// sayBinTo runs the CANS_SAY_BIN seam and, when out is named, copies the
+// script's wav there so the caller gets the path it asked for.
+func sayBinTo(text string, cur keep.Current, out string) (Result, error) {
+	if out != "" {
+		if err := os.MkdirAll(filepath.Dir(out), 0o755); err != nil {
+			return Result{}, fmt.Errorf("say: %w", err)
+		}
+	}
+	r, err := sayBin(text, cur)
+	if err != nil || out == "" {
+		return r, err
+	}
+	if err := copyFile(r.Wav, out); err != nil {
+		return Result{}, fmt.Errorf("say: %w", err)
+	}
+	r.Wav = out
+	return r, nil
+}
+
+func copyFile(src, dst string) error {
+	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
+		return err
+	}
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	f, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(f, in); err != nil {
+		f.Close()
+		return err
+	}
+	return f.Close()
 }

@@ -35,8 +35,14 @@ func Open(ctx context.Context) (*Session, error) {
 	return &Session{c: c}, nil
 }
 
-// Say clones text using the frozen throat.
+// Say clones text using the frozen throat into a temp wav.
 func (s *Session) Say(ctx context.Context, text string, cur keep.Current) (Result, error) {
+	return s.SayTo(ctx, text, cur, "")
+}
+
+// SayTo clones text using the frozen throat. out == "" writes a temp wav;
+// otherwise the wav is written at out, parent directories included.
+func (s *Session) SayTo(ctx context.Context, text string, cur keep.Current, out string) (Result, error) {
 	if s == nil || s.c == nil {
 		return Result{}, fmt.Errorf("say: no worker")
 	}
@@ -47,11 +53,15 @@ func (s *Session) Say(ctx context.Context, text string, cur keep.Current) (Resul
 	if strings.TrimSpace(cur.Wav) == "" {
 		return Result{}, fmt.Errorf("say: empty ref wav")
 	}
+	if out == "" {
+		out = filepath.Join(os.TempDir(), fmt.Sprintf("cans-%d.wav", time.Now().UnixNano()))
+	} else if err := os.MkdirAll(filepath.Dir(out), 0o755); err != nil {
+		return Result{}, fmt.Errorf("say: %w", err)
+	}
 	pcm, err := s.c.synthesize(ctx, "cans", text, cur.Wav)
 	if err != nil {
 		return Result{}, fmt.Errorf("say: %w", err)
 	}
-	out := filepath.Join(os.TempDir(), fmt.Sprintf("cans-%d.wav", time.Now().UnixNano()))
 	rate := pcm.sampleRate
 	if rate <= 0 {
 		rate = 24000

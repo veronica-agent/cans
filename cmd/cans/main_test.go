@@ -114,3 +114,29 @@ func TestSayMock(t *testing.T) {
 		t.Fatalf("code %d", code)
 	}
 }
+
+func TestSayNoTextIsUsage(t *testing.T) {
+	var buf bytes.Buffer
+	oldErr, oldIn := stderr, stdin
+	stderr, stdin = &buf, strings.NewReader("")
+	defer func() { stderr, stdin = oldErr, oldIn }()
+	if code := run([]string{"say"}); code != 2 {
+		t.Fatalf("code %d", code)
+	}
+	if !strings.Contains(buf.String(), "say: empty text") {
+		t.Fatalf("%q", buf.String())
+	}
+}
+
+func TestSayUnknownFlag(t *testing.T) {
+	var buf bytes.Buffer
+	old := stderr
+	stderr = &buf
+	defer func() { stderr = old }()
+	if code := run([]string{"say", "--bogus"}); code != 2 {
+		t.Fatalf("code %d", code)
+	}
+	if !strings.Contains(buf.String(), "--bogus") {
+		t.Fatalf("%q", buf.String())
+	}
+}
