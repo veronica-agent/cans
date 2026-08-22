@@ -14,10 +14,10 @@ import (
 )
 
 func TestTokenBudget(t *testing.T) {
-	if tokenBudget("") != 180 {
+	if tokenBudget("") != 80 {
 		t.Fatalf("empty: %d", tokenBudget(""))
 	}
-	if tokenBudget("hi") != 180 {
+	if tokenBudget("hi") != 80 {
 		t.Fatalf("short: %d", tokenBudget("hi"))
 	}
 	long := strings.Repeat("word ", 80)
@@ -207,6 +207,30 @@ func TestSessionFakeWorker(t *testing.T) {
 		t.Fatal(err)
 	}
 	RemoveTemp(r.Wav)
+}
+
+func TestSessionSilentMouth(t *testing.T) {
+	bin := buildFakeWorker(t)
+	home := t.TempDir()
+	t.Setenv("CANS_HOME", home)
+	t.Setenv("CANS_WORKER_BIN", bin)
+	t.Setenv("CANS_WORKER_MODELS", t.TempDir())
+	wav := filepath.Join(t.TempDir(), "ref.wav")
+	if err := os.WriteFile(wav, audio.Minimal(), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	sess, err := Open(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer sess.Close()
+	_, err = sess.Say(context.Background(), "silent", keep.Current{Wav: wav})
+	if err == nil {
+		t.Fatal("expected silent mouth error")
+	}
+	if !strings.Contains(err.Error(), "silent mouth") {
+		t.Fatalf("err %q", err.Error())
+	}
 }
 
 func TestSayMissingWorker(t *testing.T) {

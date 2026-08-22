@@ -128,18 +128,10 @@ func synthRequest(id, text, refWAV string) map[string]any {
 }
 
 func tokenBudget(text string) int {
-	n := 0
-	for _, w := range strings.Fields(text) {
-		if w != "" {
-			n++
-		}
-	}
-	if n < 1 {
-		n = 1
-	}
-	tokens := int(50 * (0.55*float64(n) + 2.2))
-	if tokens < 180 {
-		tokens = 180
+	n := len(strings.Fields(text))
+	tokens := 20*n + 40
+	if tokens < 80 {
+		tokens = 80
 	}
 	if tokens > 360 {
 		tokens = 360
