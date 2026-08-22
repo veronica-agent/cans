@@ -1,4 +1,5 @@
-// Fake qwen3-tts-worker for unit tests. Emits one silent sample.
+// Fake qwen3-tts-worker for unit tests. Emits a 0.3-amplitude 440 Hz sine
+// (100 ms at 24 kHz) so happy-path tests produce audible, non-silent audio.
 package main
 
 import (
@@ -40,12 +41,29 @@ func main() {
 			block()
 			return
 		}
-		fmt.Printf("{\"type\":\"pcm_meta\",\"id\":%q,\"sample_rate\":24000,\"format\":\"f32le\",\"n_samples\":1}\n", req.ID)
-		var b [4]byte
-		binary.LittleEndian.PutUint32(b[:], math.Float32bits(0))
-		_, _ = os.Stdout.Write(b[:])
-		fmt.Printf("\n{\"type\":\"final\",\"id\":%q}\n", req.ID)
+		if req.Text == "silent" {
+			fmt.Printf("{\"type\":\"pcm_meta\",\"id\":%q,\"sample_rate\":24000,\"format\":\"f32le\",\"n_samples\":1}\n", req.ID)
+			var b [4]byte
+			binary.LittleEndian.PutUint32(b[:], math.Float32bits(0))
+			_, _ = os.Stdout.Write(b[:])
+			fmt.Printf("\n{\"type\":\"final\",\"id\":%q}\n", req.ID)
+			continue
+		}
+		emitSine(req.ID)
 	}
+}
+
+func emitSine(id string) {
+	const sr = 24000
+	n := 2400
+	fmt.Printf("{\"type\":\"pcm_meta\",\"id\":%q,\"sample_rate\":%d,\"format\":\"f32le\",\"n_samples\":%d}\n", id, sr, n)
+	buf := make([]byte, n*4)
+	for i := 0; i < n; i++ {
+		s := float32(0.3 * math.Sin(2*math.Pi*440*float64(i)/float64(sr)))
+		binary.LittleEndian.PutUint32(buf[i*4:], math.Float32bits(s))
+	}
+	_, _ = os.Stdout.Write(buf)
+	fmt.Printf("\n{\"type\":\"final\",\"id\":%q}\n", id)
 }
 
 // block answers nothing: it reports that synthesis started by creating
