@@ -5,17 +5,19 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/veronica-agent/cans/internal/booth"
 	"github.com/veronica-agent/cans/internal/doctor"
 	"github.com/veronica-agent/cans/internal/keep"
-	"github.com/veronica-agent/cans/internal/play"
+	"github.com/veronica-agent/cans/internal/say"
 	"github.com/veronica-agent/cans/internal/ship"
-	"github.com/veronica-agent/cans/internal/tts"
 )
 
 var (
+	stdin  io.Reader = os.Stdin
 	stdout io.Writer = os.Stdout
 	stderr io.Writer = os.Stderr
 )
@@ -25,10 +27,15 @@ const usage = `cans — put the cans on.
 Apple Silicon. The mouth is a native Qwen3-TTS worker cloning a wav.
 
   cans                         booth (throat frozen for the session)
-  cans say <text>              speak one line
   cans keep <wav> -text WORDS  freeze this throat (both orders work)
   cans doctor                  set up the mouth, check the machine
   cans version                 print version
+
+  cans say [-o out.wav] [--json] [--play] [--nowait|--wait 30s] <text>
+  echo text | cans say
+  cans say --stream -o 'out/%03d.wav' < lines.txt
+
+exit 75 when another cans holds the mouth and --nowait was set or --wait ran out
 `
 
 func main() {
@@ -37,45 +44,11 @@ func main() {
 
 func run(args []string) int {
 	if len(args) == 0 {
-		if err := doctor.Prepare(context.Background(), stderr); err != nil {
-			fmt.Fprintln(stderr, err)
-			return 1
-		}
-		throat, err := keep.Load()
-		if err != nil {
-			fmt.Fprintln(stderr, err)
-			return 1
-		}
-		if err := booth.Run(context.Background(), keep.Quote(), throat); err != nil {
-			fmt.Fprintln(stderr, err)
-			return 1
-		}
-		return 0
+		return runBooth()
 	}
 	switch args[0] {
 	case "say":
-		text := strings.TrimSpace(strings.Join(args[1:], " "))
-		if text == "" {
-			fmt.Fprintln(stderr, "say: missing text")
-			return 2
-		}
-		if err := doctor.Prepare(context.Background(), stderr); err != nil {
-			fmt.Fprintln(stderr, err)
-			return 1
-		}
-		r, err := tts.Say(context.Background(), text)
-		if err != nil {
-			fmt.Fprintln(stderr, err)
-			return 1
-		}
-		fmt.Fprintf(stdout, "ttfa_ms=%d\n", r.TTFAMs)
-		playErr := play.File(r.Wav)
-		tts.RemoveTemp(r.Wav)
-		if playErr != nil {
-			fmt.Fprintln(stderr, playErr)
-			return 1
-		}
-		return 0
+		return runSay(args[1:])
 	case "doctor":
 		if err := doctor.Run(context.Background(), stdout, stderr); err != nil {
 			return 1
@@ -104,6 +77,44 @@ func run(args []string) int {
 		fmt.Fprint(stderr, usage)
 		return 2
 	}
+}
+
+// runSay speaks one `cans say`, cancellable by SIGINT or SIGTERM.
+func runSay(args []string) int {
+	o, err := parseSay(args)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
+	}
+	o.StdinTTY = stdinIsTTY()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	// D014: the first signal cancels; stop() then restores the default
+	// disposition, so a second Ctrl-C ends the process at once. stop() cancels
+	// ctx as well, so this goroutine always ends with runSay.
+	go func() {
+		<-ctx.Done()
+		stop()
+	}()
+	return say.Run(ctx, o, stdin, stdout, stderr)
+}
+
+// runBooth prepares the mouth and opens the TUI on the frozen throat.
+func runBooth() int {
+	if err := doctor.Prepare(context.Background(), stderr); err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	throat, err := keep.Load()
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	if err := booth.Run(context.Background(), keep.Quote(), throat); err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+	return 0
 }
 
 // parseKeep accepts both `keep take.wav -text words` and `keep -text words take.wav`.

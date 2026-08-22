@@ -32,6 +32,11 @@ booth:
     chmod +x {{ root }}/tapes/fake-say
     just vhs record tapes/booth.tape
 
+# Real mouth, no audio: a script pipes lines in, wavs land in out/.
+pipe:
+    just build quick
+    just vhs record tapes/pipe.tape
+
 # Real mouth + VHS terminal, muxed to docs/booth.mp4 (gif stays silent).
 # The line is baked with qwen3-tts-cli, the one-shot tool that ships next to
 # the worker (cans doctor puts both in ~/.cans/native/bin).

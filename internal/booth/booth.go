@@ -148,7 +148,10 @@ func Run(ctx context.Context, quote string, throat keep.Current) error {
 	lipgloss.SetHasDarkBackground(true)
 	var sess *tts.Session
 	if os.Getenv("CANS_SAY_BIN") == "" {
-		s, err := tts.Open(ctx)
+		s, err := tts.OpenWith(ctx, tts.Options{
+			Wait:   -1,
+			OnWait: func() { fmt.Fprintln(os.Stderr, "waiting for the mouth…") },
+		})
 		if err != nil {
 			return err
 		}
