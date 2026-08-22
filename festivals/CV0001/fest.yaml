@@ -18,6 +18,9 @@ metadata:
     - status: active
       timestamp: 2026-08-21T05:14:26.058564-06:00
       path: festivals/active/cans-v2-CV0001
+    - status: completed
+      timestamp: 2026-08-21T18:47:48.044444-06:00
+      path: festivals/.dungeon/completed/2026-08-21/cans-v2-CV0001
 project_path: projects/cans
 type_config:
   auto_phases:

@@ -2,11 +2,12 @@
 fest_type: festival
 fest_id: CV0001
 fest_name: cans-v2
-fest_status: active
+fest_status: completed
 fest_created: 2026-08-21T04:32:49.124639-06:00
-fest_updated: 2026-08-21T05:14:26.058302-06:00
+fest_updated: 2026-08-21T18:47:48.044206-06:00
 fest_tracking: true
 ---
+
 
 
 
