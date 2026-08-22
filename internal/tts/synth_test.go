@@ -2,6 +2,7 @@ package tts
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"os"
 	"os/exec"
@@ -231,6 +232,51 @@ func TestSessionSilentMouth(t *testing.T) {
 	if !strings.Contains(err.Error(), "silent mouth") {
 		t.Fatalf("err %q", err.Error())
 	}
+}
+
+// TestSessionQuietMouthRescued is the end-to-end proof for the Clean×Silent
+// order: a 200 ms peak-0.015 clone is Silent before Clean (trimAmp == 0.02)
+// and would have been rejected as silent mouth. After Clean (normalize, then
+// trim) SayTo keeps it. Fails on main; passes with normalize-inside-Clean.
+func TestSessionQuietMouthRescued(t *testing.T) {
+	bin := buildFakeWorker(t)
+	home := t.TempDir()
+	t.Setenv("CANS_HOME", home)
+	t.Setenv("CANS_WORKER_BIN", bin)
+	t.Setenv("CANS_WORKER_MODELS", t.TempDir())
+	wav := filepath.Join(t.TempDir(), "ref.wav")
+	if err := os.WriteFile(wav, audio.Minimal(), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	sess, err := Open(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer sess.Close()
+	r, err := sess.Say(context.Background(), "quiet", keep.Current{Wav: wav})
+	if err != nil {
+		t.Fatalf("quiet clone should be kept after Clean: %v", err)
+	}
+	if err := audio.HeaderOK(r.Wav); err != nil {
+		t.Fatal(err)
+	}
+	b, err := os.ReadFile(r.Wav)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(b) < 44 {
+		t.Fatalf("short wav %d", len(b))
+	}
+	sr := int(binary.LittleEndian.Uint32(b[24:28]))
+	dataBytes := int(binary.LittleEndian.Uint32(b[40:44]))
+	if sr <= 0 {
+		t.Fatalf("sr %d", sr)
+	}
+	ms := (dataBytes / 2) * 1000 / sr
+	if ms < 100 {
+		t.Fatalf("Clean collapsed quiet clone to %dms; want ~200ms", ms)
+	}
+	RemoveTemp(r.Wav)
 }
 
 func TestSayMissingWorker(t *testing.T) {

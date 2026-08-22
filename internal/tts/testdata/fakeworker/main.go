@@ -1,5 +1,7 @@
 // Fake qwen3-tts-worker for unit tests. Emits a 0.3-amplitude 440 Hz sine
 // (100 ms at 24 kHz) so happy-path tests produce audible, non-silent audio.
+// Text "silent" is a 1-sample zero. Text "quiet" is 200 ms at peak 0.015 —
+// Silent before Clean, kept after Clean (normalize-then-trim).
 package main
 
 import (
@@ -49,17 +51,20 @@ func main() {
 			fmt.Printf("\n{\"type\":\"final\",\"id\":%q}\n", req.ID)
 			continue
 		}
-		emitSine(req.ID)
+		if req.Text == "quiet" {
+			emitSine(req.ID, 4800, 0.015)
+			continue
+		}
+		emitSine(req.ID, 2400, 0.3)
 	}
 }
 
-func emitSine(id string) {
+func emitSine(id string, n int, amp float64) {
 	const sr = 24000
-	n := 2400
 	fmt.Printf("{\"type\":\"pcm_meta\",\"id\":%q,\"sample_rate\":%d,\"format\":\"f32le\",\"n_samples\":%d}\n", id, sr, n)
 	buf := make([]byte, n*4)
 	for i := 0; i < n; i++ {
-		s := float32(0.3 * math.Sin(2*math.Pi*440*float64(i)/float64(sr)))
+		s := float32(amp * math.Sin(2*math.Pi*440*float64(i)/float64(sr)))
 		binary.LittleEndian.PutUint32(buf[i*4:], math.Float32bits(s))
 	}
 	_, _ = os.Stdout.Write(buf)

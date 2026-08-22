@@ -106,7 +106,6 @@ func (s *Session) SayTo(ctx context.Context, text string, cur keep.Current, out 
 		rate = 24000
 	}
 	pcm.samples = audio.Clean(pcm.samples, rate)
-	pcm.samples = audio.Normalize(pcm.samples, 0.5)
 	if audio.Silent(pcm.samples, rate) {
 		pcm, err = s.c.synthesize(ctx, "cans", text, cur.Wav)
 		if err != nil {
@@ -116,7 +115,6 @@ func (s *Session) SayTo(ctx context.Context, text string, cur keep.Current, out 
 			rate = pcm.sampleRate
 		}
 		pcm.samples = audio.Clean(pcm.samples, rate)
-		pcm.samples = audio.Normalize(pcm.samples, 0.5)
 		if audio.Silent(pcm.samples, rate) {
 			return Result{}, fmt.Errorf("say: silent mouth")
 		}

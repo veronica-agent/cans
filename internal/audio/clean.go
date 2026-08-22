@@ -6,21 +6,44 @@ const (
 	highpassHz  = 80
 	shelfHz     = 7000
 	shelfGainDB = -8
-	trimAmp     = 0.02 // ~-34 dB
+	cleanPeak   = 0.5
+	noiseFloor  = 0.001 // below this, treat as glitch, not speech
+	trimAmp     = 0.02  // ~-34 dB
 	padMs       = 30
 	fadeMs      = 8
 )
 
-// Clean high-passes rumble, shelves vocoder hiss, trims quiet edges, fades the cut.
+// Clean high-passes rumble, shelves vocoder hiss, peak-normalizes so quiet
+// speech survives trimming, trims quiet edges, and fades the cut.
 func Clean(samples []float32, sampleRate int) []float32 {
 	if len(samples) == 0 || sampleRate <= 0 {
 		return samples
 	}
 	highpass(samples, sampleRate, highpassHz)
 	highshelf(samples, sampleRate, shelfHz, shelfGainDB)
+	samples = normalizeIfReal(samples)
 	samples = trimSilence(samples, sampleRate, trimAmp, padMs)
 	fade(samples, sampleRate, fadeMs)
 	return samples
+}
+
+// normalizeIfReal peak-normalizes to cleanPeak only when the signal exceeds
+// noiseFloor, so near-zero glitches stay near-zero and trim collapses them to
+// the pad. Normalize itself skips all-zero input (max <= 0).
+func normalizeIfReal(samples []float32) []float32 {
+	var peak float32
+	for _, x := range samples {
+		if x < 0 {
+			x = -x
+		}
+		if x > peak {
+			peak = x
+		}
+	}
+	if peak <= noiseFloor {
+		return samples
+	}
+	return Normalize(samples, cleanPeak)
 }
 
 func highpass(samples []float32, sampleRate int, cutoff float64) {
