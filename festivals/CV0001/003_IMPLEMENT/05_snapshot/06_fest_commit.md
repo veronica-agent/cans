@@ -1,18 +1,20 @@
 ---
+fest_type: gate
+fest_id: 06_fest_commit.md
+fest_name: Fest Commit Changes
+fest_parent: 05_snapshot
+fest_order: 6
+fest_status: completed
 fest_autonomy: high
-fest_created: 2026-08-21T05:04:57.567658-06:00
 fest_gate_id: fest-commit
 fest_gate_type: commit
-fest_id: 06_fest_commit.md
 fest_managed: true
-fest_name: Fest Commit Changes
-fest_order: 6
-fest_parent: 05_snapshot
-fest_status: pending
+fest_created: 2026-08-21T05:04:57.567658-06:00
+fest_updated: 2026-08-21T18:15:27.689584-06:00
 fest_tracking: true
-fest_type: gate
 fest_version: "1.0"
 ---
+
 
 # Gate: Commit Sequence Changes
 
@@ -62,7 +64,29 @@ The following practices are **prohibited** in commit messages:
 
 ## Definition of Done
 
-- [ ] Pre-commit checklist verified
-- [ ] Commit created with `fest commit` (not `git commit`)
-- [ ] Message describes what changed and why
-- [ ] No prohibited content in commit message
+- [x] Pre-commit checklist verified
+- [x] Commit created with `fest commit` (not `git commit`)
+- [x] Message describes what changed and why
+- [x] No prohibited content in commit message — no AI attribution, no co-author tag, no tool links
+
+## Result
+
+```
+$ cd <festival>/003_IMPLEMENT/05_snapshot
+$ gh auth switch -u veronica-agent
+✓ Switched active account for github.com to veronica-agent
+$ fest commit -m "feat: festivals/CV0001 — the v2 plan as a readable tree …"
+Hash        9136cbe
+Message     [veronica:ea389d71-FE-CV0001] feat: festivals/CV0001 — the v2 plan as a readable tree
+Task        FE-CV0001
+Campaign    [veronica:ea389d71-FE-CV0001]
+Root Commit 21e5252
+```
+
+- **Worktree (`veronica-agent/cans`, branch `cans-v2`): `9136cbe`** — `86 files changed, 5541 insertions(+)`, all additions under `festivals/CV0001/`. Author `Veronica <318153306+veronica-agent@users.noreply.github.com>`, the campaign identity the rules require.
+- **Campaign root: `21e5252`** — the festival's own task documents and statuses.
+- Pushed from the worktree: `5e8123d..9136cbe  cans-v2 -> cans-v2`. `git status --short` clean afterwards.
+
+The copy in the commit is current as of `05_iterate` being completed; only this gate's own
+`fest_status` moved after the snapshot was taken. `004_REVIEW` re-runs the recorded rsync
+(`01_snapshot.md` — six exclusions plus `--delete-excluded`) before the PR, which picks it up.
