@@ -1,0 +1,61 @@
+version: "1.0"
+metadata:
+  id: CV0001
+  uuid: 21314ea0-9d04-4966-8f0d-cb0ee29597bc
+  name: cans-v2
+  goal: 'Cans becomes a unix primitive a script can drive over a document: text in from argv or stdin, wav out where you point it, and one mouth at a time no matter how the script loops.'
+  festival_type: standard
+  created_at: 2026-08-21T10:32:49.126582Z
+  initial_size_bytes: 36436
+  status_history:
+    - status: planning
+      timestamp: 2026-08-21T10:32:49.126582Z
+      path: festivals/planning/cans-v2-CV0001
+      notes: Festival created
+    - status: ready
+      timestamp: 2026-08-21T05:14:25.529502-06:00
+      path: festivals/ready/cans-v2-CV0001
+    - status: active
+      timestamp: 2026-08-21T05:14:26.058564-06:00
+      path: festivals/active/cans-v2-CV0001
+project_path: projects/cans
+type_config:
+  auto_phases:
+    - INGEST
+    - PLAN
+  pending_phases:
+    - name: IMPLEMENT
+      type: implementation
+    - name: POLISH
+      type: planning
+quality_gates:
+  enabled: true
+  auto_append: true
+  implementation:
+    - id: testing
+      template: gates/implementation/QUALITY_GATE_TESTING
+      name: Testing and Verification
+      enabled: true
+    - id: review
+      template: gates/implementation/QUALITY_GATE_REVIEW
+      name: Code Review
+      enabled: true
+    - id: iterate
+      template: gates/implementation/QUALITY_GATE_ITERATE
+      name: Review Results and Iterate
+      enabled: true
+    - id: fest-commit
+      template: gates/implementation/QUALITY_GATE_FEST_COMMIT
+      name: Fest Commit Changes
+      enabled: true
+excluded_patterns:
+  - '*_planning'
+  - '*_research'
+  - '*_requirements'
+  - '*_docs'
+templates:
+  task_default: tasks/SIMPLE
+  prefer_simple: true
+tracking:
+  enabled: true
+  checksum_file: .festival-checksums.json
