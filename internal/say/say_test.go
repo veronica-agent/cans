@@ -217,7 +217,7 @@ func TestRunStdinIsOneUtterance(t *testing.T) {
 }
 
 func TestRunJSONRecord(t *testing.T) {
-	sayBinEnv(t)
+	fake := sayBinEnv(t)
 	o := DefaultOptions()
 	o.Text = "Put the cans on."
 	o.JSON = true
@@ -229,12 +229,18 @@ func TestRunJSONRecord(t *testing.T) {
 	if len(lines) != 1 {
 		t.Fatalf("stdout %q, want one record", out.String())
 	}
+	if strings.Contains(lines[0], `"wav"`) {
+		t.Fatalf("wav in record without -o: %s", lines[0])
+	}
 	var r tts.Result
 	if err := json.Unmarshal([]byte(lines[0]), &r); err != nil {
 		t.Fatalf("stdout %q: %v", lines[0], err)
 	}
-	if r.TTFAMs != 12 || r.SampleRate != 24000 {
+	if r.Wav != "" || r.TTFAMs != 12 || r.SampleRate != 24000 {
 		t.Fatalf("record %+v", r)
+	}
+	if _, err := os.Stat(fake.spoken); err == nil {
+		t.Fatal("temp wav should be gone after --json without -o")
 	}
 }
 

@@ -18,7 +18,7 @@ var errLineFailed = errors.New("line failed")
 
 type okRecord struct {
 	Line       int    `json:"line"`
-	Wav        string `json:"wav"`
+	Wav        string `json:"wav,omitempty"`
 	TTFAMs     int    `json:"ttfa_ms"`
 	SampleRate int    `json:"sample_rate"`
 }
@@ -119,7 +119,11 @@ func (s *streamer) speak(ctx context.Context, line string, lineNo, idx int) erro
 		_ = s.emit(errRecord{Line: lineNo, Error: err.Error()})
 		return errLineFailed
 	}
-	if err := s.emit(okRecord{Line: lineNo, Wav: r.Wav, TTFAMs: r.TTFAMs, SampleRate: r.SampleRate}); err != nil {
+	rec := okRecord{Line: lineNo, TTFAMs: r.TTFAMs, SampleRate: r.SampleRate}
+	if s.o.Out != "" {
+		rec.Wav = r.Wav
+	}
+	if err := s.emit(rec); err != nil {
 		fmt.Fprintln(s.stderr, err)
 		return errLineFailed
 	}

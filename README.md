@@ -97,7 +97,7 @@ cans say --stream --json -o 'out/%03d.wav' < lines.txt | jq -r 'select(.error==n
 |------|--------|
 | `-o`, `--out` | Write the wav here. Under `--stream` the path takes one `%d`, as in `out/%03d.wav`. |
 | `--stream` | Read stdin line by line, one utterance per line, one worker for all of them. Text on argv is a usage error. |
-| `--json` | One JSON record per utterance on stdout; `--stream` adds `"line"`. |
+| `--json` | One JSON record per utterance on stdout; `--stream` adds `"line"`. `wav` is present only with `-o`. |
 | `--play` | Play the wav as well as writing it. Needs `-o`. |
 | `--nowait` | Do not queue behind another cans: give up at once. |
 | `--wait <dur>` | Queue for at most that long. Without either flag, cans waits. |
@@ -115,7 +115,7 @@ stdout carries data — a JSON record, a wav path, or `ttfa_ms=N`, the worker's 
 
 Ctrl-C stops the stream: the line being spoken is dropped, finished wavs stay, exit 130. A second Ctrl-C stops at once.
 
-Without -o the wav is a temp file removed after playback.
+Without -o the wav is a temp file removed after playback. `--json` without `-o` omits `wav` so a script is not handed a path that will not survive. Pass `-o` if the file is needed.
 
 ---
 

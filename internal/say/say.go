@@ -74,12 +74,24 @@ func playTail(o Options, wav string) error {
 	return nil
 }
 
+// jsonShot is a one-shot --json record. wav is omitted when there is no -o:
+// that file is a temp that playTail deletes, and a script must not trust it.
+type jsonShot struct {
+	Wav        string `json:"wav,omitempty"`
+	TTFAMs     int    `json:"ttfa_ms"`
+	SampleRate int    `json:"sample_rate"`
+}
+
 // emit writes the one record for an utterance: a JSON line, the wav path, or
 // the v1 ttfa_ms line. stdout carries nothing else.
 func emit(stdout io.Writer, o Options, r tts.Result) error {
 	switch {
 	case o.JSON:
-		return json.NewEncoder(stdout).Encode(r)
+		rec := jsonShot{TTFAMs: r.TTFAMs, SampleRate: r.SampleRate}
+		if o.Out != "" {
+			rec.Wav = r.Wav
+		}
+		return json.NewEncoder(stdout).Encode(rec)
 	case o.Out != "":
 		_, err := fmt.Fprintln(stdout, r.Wav)
 		return err

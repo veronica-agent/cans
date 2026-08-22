@@ -73,6 +73,31 @@ func TestStreamJSONRecords(t *testing.T) {
 	if recs[1]["error"] == nil {
 		t.Fatalf("middle record %+v", recs[1])
 	}
+	if recs[0]["wav"] != filepath.Join(dir, "001.wav") {
+		t.Fatalf("wav %+v", recs[0]["wav"])
+	}
+}
+
+func TestStreamJSONWithoutOutOmitsWav(t *testing.T) {
+	fakeWorkerEnv(t)
+	o := DefaultOptions()
+	o.Stream = true
+	o.JSON = true
+	var out, errBuf bytes.Buffer
+	code := Run(context.Background(), o, strings.NewReader("Put the cans on.\n"), &out, &errBuf)
+	if code != ExitOK {
+		t.Fatalf("code %d stderr %q", code, errBuf.String())
+	}
+	if strings.Contains(out.String(), `"wav"`) {
+		t.Fatalf("wav in record without -o: %s", out.String())
+	}
+	var rec map[string]any
+	if err := json.Unmarshal(out.Bytes(), &rec); err != nil {
+		t.Fatalf("stdout %q: %v", out.String(), err)
+	}
+	if rec["line"] != float64(1) || rec["ttfa_ms"] == nil {
+		t.Fatalf("record %+v", rec)
+	}
 }
 
 func TestStreamOneWorker(t *testing.T) {
