@@ -33,6 +33,26 @@ func TestSilentLowPeak(t *testing.T) {
 	}
 }
 
+// TestSilentLowPeakRescuedByNormalize proves that a long, quiet-but-real clone
+// (200ms, peak 0.015) is Silent before Normalize but NOT Silent after Normalize
+// to 0.5. SayTo runs Clean → Normalize → Silent, so such a clone survives
+// instead of being rejected as a silent mouth.
+func TestSilentLowPeakRescuedByNormalize(t *testing.T) {
+	sr := 24000
+	n := sr * 200 / 1000 // 200ms
+	s := make([]float32, n)
+	for i := range s {
+		s[i] = 0.015 * float32(math.Sin(2*math.Pi*440*float64(i)/float64(sr)))
+	}
+	if !Silent(s, sr) {
+		t.Fatal("200ms peak 0.015 should be silent before normalize")
+	}
+	out := Normalize(s, 0.5)
+	if Silent(out, sr) {
+		t.Fatal("200ms peak 0.015 should NOT be silent after normalize to 0.5")
+	}
+}
+
 func TestSilentOK(t *testing.T) {
 	sr := 24000
 	n := sr / 10
