@@ -127,7 +127,10 @@ func (s *streamer) speak(ctx context.Context, line string, lineNo, idx int) erro
 		fmt.Fprintln(s.stderr, err)
 		return errLineFailed
 	}
-	if err := playTail(s.o, r.Wav); err != nil {
+	if err := playTail(ctx, s.o, r.Wav); err != nil {
+		if interrupted(err) {
+			return err
+		}
 		fmt.Fprintln(s.stderr, err)
 		return errLineFailed
 	}
