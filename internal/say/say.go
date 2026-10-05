@@ -52,9 +52,8 @@ func runOnce(ctx context.Context, o Options, text string, stdout, stderr io.Writ
 		fmt.Fprintln(stderr, err)
 		return ExitFail
 	}
-	if err := playTail(o, r.Wav); err != nil {
-		fmt.Fprintln(stderr, err)
-		return ExitFail
+	if err := playTail(ctx, o, r.Wav); err != nil {
+		return exitFor(err, stderr)
 	}
 	return ExitOK
 }
@@ -62,14 +61,14 @@ func runOnce(ctx context.Context, o Options, text string, stdout, stderr io.Writ
 // playTail is the tail every spoken utterance shares. With no -o the wav is a
 // temp file: it is played, then removed whether or not playing worked. With -o
 // the wav is the caller's and is only played on --play.
-func playTail(o Options, wav string) error {
+func playTail(ctx context.Context, o Options, wav string) error {
 	if o.Out == "" {
-		err := play.File(wav)
+		err := play.FileContext(ctx, wav)
 		tts.RemoveTemp(wav)
 		return err
 	}
 	if o.Play {
-		return play.File(wav)
+		return play.FileContext(ctx, wav)
 	}
 	return nil
 }

@@ -1,6 +1,7 @@
 package play
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -11,6 +12,14 @@ import (
 
 // File plays a wav. CANS_NOPLAY=1 skips after validating the file.
 func File(path string) error {
+	return FileContext(context.Background(), path)
+}
+
+// FileContext plays a wav until it finishes or ctx is canceled.
+func FileContext(ctx context.Context, path string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	if err := audio.HeaderOK(path); err != nil {
 		return fmt.Errorf("play: %w", err)
 	}
@@ -20,11 +29,15 @@ func File(path string) error {
 	var cmd *exec.Cmd
 	switch runtime.GOOS {
 	case "darwin":
-		cmd = exec.Command("afplay", path)
+		cmd = exec.CommandContext(ctx, "afplay", path)
 	default:
-		cmd = exec.Command("ffplay", "-nodisp", "-autoexit", "-loglevel", "error", path)
+		cmd = exec.CommandContext(ctx, "ffplay", "-nodisp", "-autoexit", "-loglevel", "error", path)
 	}
 	cmd.Stdout = os.Stderr
 	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	err := cmd.Run()
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+	return err
 }
